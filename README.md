@@ -439,8 +439,8 @@ erDiagram
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/empresa/sender_call.git
-cd sender_call
+git clone https://github.com/Villela-Tech/Chat-Sender.git
+cd Chat-Sender
 ```
 
 2. **Variáveis de ambiente**
