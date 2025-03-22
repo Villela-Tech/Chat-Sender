@@ -22,7 +22,7 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import QueueSelect from "../QueueSelect";
+import QueueSelectCustom from "../QueueSelectCustom";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
 
@@ -148,6 +148,7 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
           {({ touched, errors, isSubmitting }) => (
             <Form>
               <DialogContent dividers>
+
                 <div className={classes.multFieldLine}>
                   <Field
                     as={TextField}
@@ -171,7 +172,9 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
                     margin="dense"
                     fullWidth
                   />
+
                 </div>
+
                 <div className={classes.multFieldLine}>
                   <Field
                     as={TextField}
@@ -213,11 +216,13 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
                     />
                   </FormControl>
                 </div>
+
                 <Can
                   role={loggedInUser.profile}
                   perform="user-modal:editQueues"
                   yes={() => (
-                    <QueueSelect
+                    <QueueSelectCustom
+                      companyId={companyId}
                       selectedQueueIds={selectedQueueIds}
                       onChange={(values) => setSelectedQueueIds(values)}
                     />

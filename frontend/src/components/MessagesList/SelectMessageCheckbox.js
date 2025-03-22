@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import toastError  from "../../errors/toastError";
-import { Checkbox } from "@mui/material";
+import { Checkbox } from "@material-ui/core";
 import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 
 const SelectMessageCheckbox = ({ message }) => {

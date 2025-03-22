@@ -37,11 +37,21 @@ const useQuickMessages = () => {
         return data;
     }
 
+    const list2 = async (params) => {
+        const { data } = await api.request({
+            url: '/quick-messages/categoriesMessages',
+            method: 'GET',
+            params
+        });
+        return data;
+    }
+
     return {
         save,
         update,
         deleteRecord,
-        list
+        list,
+        list2
     }
 }
 

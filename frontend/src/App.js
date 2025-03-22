@@ -1,219 +1,292 @@
-import React, { useState, useEffect, useMemo } from "react";
-import api from "./services/api";
+/**
+ * Componente principal da aplicação React
+ * Responsável pela configuração do tema, contexto de cores, 
+ * gerenciamento de estado global e roteamento
+ */
+
+import React, { useState, useEffect } from "react";
+
 import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
+
 import { ptBR } from "@material-ui/core/locale";
 import { createTheme, ThemeProvider } from "@material-ui/core/styles";
 import { useMediaQuery } from "@material-ui/core";
 import ColorModeContext from "./layout/themeContext";
-import { ActiveMenuProvider } from "./context/ActiveMenuContext";
-import Favicon from "react-favicon";
-import { getBackendUrl } from "./config";
-import Routes from "./routes";
-import defaultLogoLight from "./assets/logo.png";
-import defaultLogoDark from "./assets/logo-black.png";
-import defaultLogoFavicon from "./assets/favicon.ico";
-import useSettings from "./hooks/useSettings";
 
+import Routes from "./routes";
+import useSettings from "./hooks/useSettings";
+import { SocketContext, socketManager } from './context/Socket/SocketContext';
+
+// Definição dos caminhos padrão para logos
+const defaultLogoLight = "assets/vector/logo.svg";
+const defaultLogoDark = "assets/vector/logo-dark.svg";
+const defaultLogoFavicon = "assets/vector/favicon.svg";
+
+// Inicialização do cliente React Query para gerenciamento de estado
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [locale, setLocale] = useState();
-  const appColorLocalStorage = localStorage.getItem("primaryColorLight") || localStorage.getItem("primaryColorDark") || "#065183";
-  const appNameLocalStorage = localStorage.getItem("appName") || "";
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const preferredTheme = window.localStorage.getItem("preferredTheme");
-  const [mode, setMode] = useState(preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light");
-  const [primaryColorLight, setPrimaryColorLight] = useState(appColorLocalStorage);
-  const [primaryColorDark, setPrimaryColorDark] = useState(appColorLocalStorage);
-  const [appLogoLight, setAppLogoLight] = useState(defaultLogoLight);
-  const [appLogoDark, setAppLogoDark] = useState(defaultLogoDark);
-  const [appLogoFavicon, setAppLogoFavicon] = useState(defaultLogoFavicon);
-  const [appName, setAppName] = useState(appNameLocalStorage);
-  const { getPublicSetting } = useSettings();
+    // Estados para gerenciamento de localização
+    const [locale, setLocale] = useState();
 
-  const colorMode = useMemo(
-    () => ({
-      toggleColorMode: () => {
-        setMode((prevMode) => {
-          const newMode = prevMode === "light" ? "dark" : "light";
-          window.localStorage.setItem("preferredTheme", newMode); // Persistindo o tema no localStorage
-          return newMode;
-        });
-      },
-      setPrimaryColorLight,
-      setPrimaryColorDark,
-      setAppLogoLight,
-      setAppLogoDark,
-      setAppLogoFavicon,
-      setAppName,
-      appLogoLight,
-      appLogoDark,
-      appLogoFavicon,
-      appName,
-      mode,
-    }),
-    [appLogoLight, appLogoDark, appLogoFavicon, appName, mode]
-  );
+    // Configuração do tema escuro/claro baseado na preferência do sistema
+    const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+    const preferredTheme = window.localStorage.getItem("preferredTheme");
+    const [mode, setMode] = useState(preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light");
 
-  const theme = useMemo(
-    () =>
-      createTheme(
+    // Estados para cores e assets da aplicação
+    const [primaryColorLight, setPrimaryColorLight] = useState("#F3F3F3");
+    const [primaryColorDark, setPrimaryColorDark] = useState("#333333");
+    const [appLogoLight, setAppLogoLight] = useState("");
+    const [appLogoDark, setAppLogoDark] = useState("");
+    const [appLogoFavicon, setAppLogoFavicon] = useState("");
+    const [appName, setAppName] = useState("");
+
+    // Estados para cores do chat
+    const [chatlistLight, setChatlistLight] = useState("#FFFFFF");
+    const [chatlistDark, setChatlistDark] = useState("#999999");
+    const [boxRightLight, setBoxRightLight] = useState("#39ACE7");
+    const [boxRightDark, setBoxRightDark] = useState("#39ACE7");
+    const [boxLeftLight, setBoxLeftLight] = useState("#39ACE7");
+    const [boxLeftDark, setBoxLeftDark] = useState("#39ACE7");
+
+    const { getPublicSetting } = useSettings();
+
+    // Contexto de cores para alternância de tema
+    const colorMode = React.useMemo(
+        () => ({
+            toggleColorMode: () => {
+                setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+            },
+
+            setPrimaryColorLight: (color) => {
+                if (!color || !color.startsWith("#")) {
+                    color = "#0000FF";
+                }
+                setPrimaryColorLight(color);
+            },
+            setPrimaryColorDark: (color) => {
+                setPrimaryColorDark(color);
+            },
+            setAppLogoLight: (file) => {
+                setAppLogoLight(file);
+            },
+            setAppLogoDark: (file) => {
+                setAppLogoDark(file);
+            },
+            setAppLogoFavicon: (file) => {
+                setAppLogoFavicon(file);
+            },
+            setAppName: (name) => {
+                setAppName(name);
+            },
+            setChatlistLight: (color) => {
+                setChatlistLight(color);
+            },
+            setChatlistDark: (color) => {
+                setChatlistDark(color);
+            },
+            setBoxLeftLight: (color) => {
+                setBoxLeftLight(color);
+            },
+            setBoxLeftDark: (color) => {
+                setBoxLeftDark(color);
+            },
+            setBoxRightLight: (color) => {
+                setBoxRightLight(color);
+            },
+            setBoxRightDark: (color) => {
+                setBoxRightDark(color);
+            }
+
+        }),
+        []
+    );
+
+     // Configuração do tema Material-UI
+     const theme = createTheme(
         {
-          scrollbarStyles: {
-            "&::-webkit-scrollbar": {
-              width: "8px",
-              height: "8px",
+            scrollbarStyles: {
+                "&::-webkit-scrollbar": {
+                    width: '8px',
+                    height: '8px',
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    boxShadow: 'inset 0 0 6px rgba(0, 0, 0, 0.3)',
+                    backgroundColor: "#00008B",
+                },
             },
-            "&::-webkit-scrollbar-thumb": {
-              boxShadow: "inset 0 0 6px rgba(0, 0, 0, 0.3)",
-              backgroundColor: mode === "light" ? primaryColorLight : primaryColorDark,
+            scrollbarStylesSoft: {
+                "&::-webkit-scrollbar": {
+                    width: "8px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: mode === "light" ? "#00008B" : "#333333",
+                },
+
             },
-          },
-          scrollbarStylesSoft: {
-            "&::-webkit-scrollbar": {
-              width: "8px",
+            scrollbarStylesSoft: {
+                "&::-webkit-scrollbar": {
+                    width: "8px",
+                    borderRadius: "8px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: mode === "light" ? "#00008B" : "#fff !important",
+                    borderRadius: "8px",
+                },
             },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: mode === "light" ? "#F3F3F3" : "#333333",
+
+              palette: {
+                 type: mode,
+                 primary: { main: "#0000FF" },
+                 textPrimary: mode === "light" ? "#0000FF" : "#FFFFFF",
+                 borderPrimary: mode === "light" ? "#0000FF" : "#FFFFFF",
+                 dark: { main: mode === "light" ? "#333333" : "#F3F3F3" },
+                 light: { main: mode === "light" ? "#F3F3F3" : "#333333" },
+                 tabHeaderBackground: mode === "light" ? "#EEE" : "#333",
+                 optionsBackground: mode === "light" ? "#fafafa" : "#333",
+                 options: mode === "light" ? "#fafafa" : "#666",
+                 fontecor: mode === "light" ? "#0000FF" : "#fff",
+                 fancyBackground: mode === "light" ? "#fafafa" : "#333",
+                 bordabox: mode === "light" ? "#eee" : "#333",
+                 newmessagebox: mode === "light" ? "#eee" : "#333",
+                 inputdigita: mode === "light" ? "#fff" : "#333",
+                 contactdrawer: mode === "light" ? "#fff" : "#333",
+                 announcements: mode === "light" ? "#ededed" : "#333",
+                 login: mode === "light" ? "#fff" : "#1C1C1C",
+                 announcementspopover: mode === "light" ? "#fff" : "#333",
+                 chatlist: mode === "light" ? "#eee" : "#333",
+                 boxlist: mode === "light" ? "#ededed" : "#333",
+                 boxchatlist: mode === "light" ? "#ededed" : "#333",
+                 total: mode === "light" ? "#fff" : "#222",
+                 messageIcons: mode === "light" ? "grey" : "#F3F3F3",
+                 inputBackground: mode === "light" ? "#FFFFFF" : "#333",
+                 barraSuperior: mode === "light" ? "linear-gradient(to right, #fff, #00008B, #00008B)" : "#0000FF",
+                 boxticket: mode === "light" ? "#EEE" : "#333",
+                 campaigntab: mode === "light" ? "#fff" : "#333",
+                 drawerIcons: mode === "light" ? "#00008B" : "inherit",
+                 drawerBackground: mode === "light" ? "#fff" : "#333",
+                 drawerText: mode === "light" ? "#00008B" : "#fff",
+
+                 // background: '#10175b',
+                 // color: 'white',
+
+
+             },
+            mode,
+            appLogoDark,
+            appLogoLight,
+            appLogoFavicon,
+            appName,
+            chatlistLight,
+            chatlistDark,
+            boxLeftLight,
+            boxLeftDark,
+            boxRightLight,
+            boxRightDark,
+            calculatedLogoDark: () => {
+                if (appLogoDark === defaultLogoDark && appLogoLight !== defaultLogoLight) {
+                    return appLogoLight;
+                }
+                return appLogoDark;
             },
-          },
-          palette: {
-            type: mode,
-            primary: { main: mode === "light" ? primaryColorLight : primaryColorDark },
-            textPrimary: mode === "light" ? primaryColorLight : primaryColorDark,
-            borderPrimary: mode === "light" ? primaryColorLight : primaryColorDark,
-            dark: { main: mode === "light" ? "#333333" : "#F3F3F3" },
-            light: { main: mode === "light" ? "#F3F3F3" : "#333333" },
-            fontColor: mode === "light" ? primaryColorLight : primaryColorDark,
-            tabHeaderBackground: mode === "light" ? "#EEE" : "#666",
-            optionsBackground: mode === "light" ? "#fafafa" : "#333",
-            fancyBackground: mode === "light" ? "#fafafa" : "#333",
-            total: mode === "light" ? "#fff" : "#222",
-            messageIcons: mode === "light" ? "grey" : "#F3F3F3",
-            inputBackground: mode === "light" ? "#FFFFFF" : "#333",
-            barraSuperior: mode === "light" ? primaryColorLight : "#666",
-          },
-          mode,
-          appLogoLight,
-          appLogoDark,
-          appLogoFavicon,
-          appName,
-          calculatedLogoDark: () => {
-            if (appLogoDark === defaultLogoDark && appLogoLight !== defaultLogoLight) {
-              return appLogoLight;
+            calculatedLogoLight: () => {
+                if (appLogoDark !== defaultLogoDark && appLogoLight === defaultLogoLight) {
+                    return appLogoDark;
+                }
+                return appLogoLight;
             }
-            return appLogoDark;
-          },
-          calculatedLogoLight: () => {
-            if (appLogoDark !== defaultLogoDark && appLogoLight === defaultLogoLight) {
-              return appLogoDark;
-            }
-            return appLogoLight;
-          },
         },
         locale
-      ),
-    [appLogoLight, appLogoDark, appLogoFavicon, appName, locale, mode, primaryColorDark, primaryColorLight]
-  );
+    );
 
-  useEffect(() => {
-    const i18nlocale = localStorage.getItem("i18nextLng");
-    const browserLocale = i18nlocale.substring(0, 2) + i18nlocale.substring(3, 5);
+    // Efeito para configurar localização
+    useEffect(() => {
+        const i18nlocale = localStorage.getItem("i18nextLng");
+        const browserLocale =
+            i18nlocale.substring(0, 2) + i18nlocale.substring(3, 5);
 
-    if (browserLocale === "ptBR") {
-      setLocale(ptBR);
-    }
-  }, []);
+        if (browserLocale === "ptBR") {
+            setLocale(ptBR);
+        }
+    }, []);
 
-  useEffect(() => {
-    window.localStorage.setItem("preferredTheme", mode);
-  }, [mode]);
+    // Persiste a preferência de tema
+    useEffect(() => {
+        window.localStorage.setItem("preferredTheme", mode);
+    }, [mode]);
 
-  useEffect(() => {
-    console.log("|=========== handleSaveSetting ==========|")
-    console.log("APP START")
-    console.log("|========================================|")
-   
-    
-    getPublicSetting("primaryColorLight")
-      .then((color) => {
-        setPrimaryColorLight(color || "#0000FF");
-      })
-      .catch((error) => {
-        console.log("Error reading setting", error);
-      });
-    getPublicSetting("primaryColorDark")
-      .then((color) => {
-        setPrimaryColorDark(color || "#39ACE7");
-      })
-      .catch((error) => {
-        console.log("Error reading setting", error);
-      });
-    getPublicSetting("appLogoLight")
-      .then((file) => {
-        setAppLogoLight(file ? getBackendUrl() + "/public/" + file : defaultLogoLight);
-      })
-      .catch((error) => {
-        console.log("Error reading setting", error);
-      });
-    getPublicSetting("appLogoDark")
-      .then((file) => {
-        setAppLogoDark(file ? getBackendUrl() + "/public/" + file : defaultLogoDark);
-      })
-      .catch((error) => {
-        console.log("Error reading setting", error);
-      });
-    getPublicSetting("appLogoFavicon")
-      .then((file) => {
-        setAppLogoFavicon(file ? getBackendUrl() + "/public/" + file : defaultLogoFavicon);
-      })
-      .catch((error) => {
-        console.log("Error reading setting", error);
-      });
-    getPublicSetting("appName")
-      .then((name) => {
-        setAppName(name || "WORKZAP");
-      })
-      .catch((error) => {
-        console.log("!==== Erro ao carregar temas: ====!", error);
-        setAppName("WORKZAP");
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Carrega configurações públicas da aplicação
+    useEffect(() => {
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty("--primaryColor", mode === "light" ? primaryColorLight : primaryColorDark);
-  }, [primaryColorLight, primaryColorDark, mode]);
+        // console.log("AppLogoFavicon");
 
-  useEffect(() => {
-    async function fetchVersionData() {
-      try {
-        const response = await api.get("/version");
-        const { data } = response;
-        window.localStorage.setItem("frontendVersion", data.version);
-      } catch (error) {
-        console.log("Error fetching data", error);
-      }
-    }
-    fetchVersionData();
-  }, []);
+        getPublicSetting("primaryColorLight")
+            .then((color) => { setPrimaryColorLight(color || "#0000FF") })
+            .catch((error) => { console.log("Error reading setting", error); });
+        getPublicSetting("primaryColorDark")
+            .then((color) => { setPrimaryColorDark(color || "#39ACE7") })
+            .catch((error) => { console.log("Error reading setting", error); });
+        getPublicSetting("appLogoLight")
+            .then((file) => { setAppLogoLight(file ? (process.env.REACT_APP_BACKEND_URL + "/public/" + file) : defaultLogoLight) }, (_) => { })
+            .catch((error) => { console.log("Error reading setting", error); });
+        getPublicSetting("appLogoDark")
+            .then((file) => { setAppLogoDark(file ? (process.env.REACT_APP_BACKEND_URL + "/public/" + file) : defaultLogoDark) })
+            .catch((error) => { console.log("Error reading setting", error); });
+        getPublicSetting("appLogoFavicon")
+            .then((file) => { setAppLogoFavicon(file ? (process.env.REACT_APP_BACKEND_URL + "/public/" + file) : defaultLogoFavicon) })
+            .catch((error) => { console.log("Error reading setting", error); });
+        getPublicSetting("chatlistLight").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#eeeeee";
+            }
+            setChatlistLight(color)
+        }, (_) => { });
+        getPublicSetting("chatlistDark").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#1C2E36";
+            }
+            setChatlistDark(color)
+        }, (_) => { });
+        getPublicSetting("boxRightLight").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#39ACE7";
+            }
+            setBoxRightLight(color)
+        }, (_) => { });
+        getPublicSetting("boxRightDark").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#39ACE7";
+            }
+            setBoxRightDark(color)
+        }, (_) => { });
+        getPublicSetting("boxLeftLight").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#39ACE7";
+            }
+            setBoxLeftLight(color)
+        }, (_) => { });
+        getPublicSetting("boxLeftDark").then((color) => {
+            if (!color || !color.startsWith("#")) {
+                color = "#39ACE7";
+            }
+            setBoxLeftDark(color)
+        }, (_) => { });
+    }, [getPublicSetting]);
 
-  return (
-    <>
-      <Favicon url={appLogoFavicon ? getBackendUrl() + "/public/" + appLogoFavicon : defaultLogoFavicon} />
-      <ColorModeContext.Provider value={{ colorMode }}>
-        <ThemeProvider theme={theme}>
-          <QueryClientProvider client={queryClient}>
-            <ActiveMenuProvider>
-              <Routes />
-            </ActiveMenuProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </ColorModeContext.Provider>
-    </>
-  );
+
+    return (
+        <ColorModeContext.Provider value={{ colorMode }}>
+            <ThemeProvider theme={theme}>
+                <QueryClientProvider client={queryClient}>
+                  <SocketContext.Provider value={socketManager}>
+                    <Routes />
+                  </SocketContext.Provider>
+                </QueryClientProvider>
+            </ThemeProvider>
+        </ColorModeContext.Provider>
+    );
 };
 
 export default App;

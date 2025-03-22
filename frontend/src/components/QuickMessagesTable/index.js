@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { 
+import {
     Table,
     TableHead,
     TableBody,
     TableCell,
     TableRow,
-    IconButton
+    IconButton,
+    Chip
 } from '@material-ui/core';
 import {
     Edit as EditIcon,
     DeleteOutline as DeleteOutlineIcon
 } from "@material-ui/icons";
 
-import TableRowSkeleton from "../TableRowSkeleton";
+import TableRowSkeleton from "../../components/TableRowSkeleton";
 
 function QuickMessagesTable(props) {
     const { messages, showLoading, editMessage, deleteMessage, readOnly } = props
@@ -25,7 +26,7 @@ function QuickMessagesTable(props) {
             setRows(messages)
         }
         if (showLoading !== undefined) {
-            setLoading(showLoading)    
+            setLoading(showLoading)
         }
     }, [messages, showLoading])
 
@@ -42,8 +43,9 @@ function QuickMessagesTable(props) {
             return (
                 <TableRow key={message.id}>
                     <TableCell align="center">{message.shortcode}</TableCell>
-                    <TableCell align="left">{message.message}</TableCell>
-                    { !readOnly ? (
+                    <TableCell align="left">{message.message || 'MENU'}</TableCell>
+                    <TableCell align="left">{message?.category?.shortcode || message?.isCategory ? <Chip className={classes.backgroundDark} label={message?.category?.shortcode} variant="outlined" /> : 'Sem menu vinculada'}</TableCell>
+                    {!readOnly ? (
                         <TableCell align="center">
                             <IconButton
                                 size="small"
@@ -71,7 +73,7 @@ function QuickMessagesTable(props) {
                 <TableRow>
                     <TableCell align="center">Atalho</TableCell>
                     <TableCell align="left">Mensagem</TableCell>
-                    { !readOnly ? (
+                    {!readOnly ? (
                         <TableCell align="center">Ações</TableCell>
                     ) : null}
                 </TableRow>

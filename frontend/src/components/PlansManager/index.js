@@ -72,10 +72,7 @@ export function PlanManagerForm(props) {
         users: 0,
         connections: 0,
         queues: 0,
-        amount: 0,
-        useWhatsapp: true,
-        useFacebook: true,
-        useInstagram: true,
+        value: 0,
         useCampaigns: true,
         useSchedules: true,
         useInternalChat: true,
@@ -110,7 +107,7 @@ export function PlanManagerForm(props) {
                 <Form className={classes.fullWidth}>
                     <Grid spacing={1} justifyContent="flex-start" container>
                         {/* NOME */}
-                        <Grid xs={12} sm={6} md={2} xl={2} item>
+                        <Grid xs={12} sm={6} md={2} item>
                             <Field
                                 as={TextField}
                                 label={i18n.t("plans.form.name")}
@@ -120,6 +117,7 @@ export function PlanManagerForm(props) {
                                 margin="dense"
                             />
                         </Grid>
+                        {/* PLANO PUBLICO*/}
                         <Grid xs={12} sm={6} md={2} xl={2} item>
                             <FormControl margin="dense" variant="outlined" fullWidth>
                                 <InputLabel htmlFor="status-selection">{i18n.t("plans.form.public")}</InputLabel>
@@ -180,66 +178,12 @@ export function PlanManagerForm(props) {
                             <Field
                                 as={TextField}
                                 label="Valor"
-                                name="amount"
+                                name="value"
                                 variant="outlined"
                                 className={classes.fullWidth}
                                 margin="dense"
                                 type="text"
                             />
-                        </Grid>
-
-                        {/* WHATSAPP */}
-                        <Grid xs={12} sm={6} md={2} item>
-                            <FormControl margin="dense" variant="outlined" fullWidth>
-                                <InputLabel htmlFor="useWhatsapp-selection">Whatsapp</InputLabel>
-                                <Field
-                                    as={Select}
-                                    id="useWhatsapp-selection"
-                                    label="Whatsapp"
-                                    labelId="useWhatsapp-selection-label"
-                                    name="useWhatsapp"
-                                    margin="dense"
-                                >
-                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
-                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
-                                </Field>
-                            </FormControl>
-                        </Grid>
-
-                        {/* FACEBOOK */}
-                        <Grid xs={12} sm={6} md={2} item>
-                            <FormControl margin="dense" variant="outlined" fullWidth>
-                                <InputLabel htmlFor="useFacebook-selection">Facebook</InputLabel>
-                                <Field
-                                    as={Select}
-                                    id="useFacebook-selection"
-                                    label="Facebook"
-                                    labelId="useFacebook-selection-label"
-                                    name="useFacebook"
-                                    margin="dense"
-                                >
-                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
-                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
-                                </Field>
-                            </FormControl>
-                        </Grid>
-
-                        {/* INSTAGRAM */}
-                        <Grid xs={12} sm={6} md={2} item>
-                            <FormControl margin="dense" variant="outlined" fullWidth>
-                                <InputLabel htmlFor="useInstagram-selection">Instagram</InputLabel>
-                                <Field
-                                    as={Select}
-                                    id="useInstagram-selection"
-                                    label="Instagram"
-                                    labelId="useInstagram-selection-label"
-                                    name="useInstagram"
-                                    margin="dense"
-                                >
-                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
-                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
-                                </Field>
-                            </FormControl>
                         </Grid>
 
                         {/* CAMPANHAS */}
@@ -335,7 +279,7 @@ export function PlanManagerForm(props) {
                         {/* OPENAI */}
                         <Grid xs={12} sm={8} md={2} item>
                             <FormControl margin="dense" variant="outlined" fullWidth>
-                                <InputLabel htmlFor="useOpenAi-selection">Talk.Ai</InputLabel>
+                                <InputLabel htmlFor="useOpenAi-selection">Open.Ai</InputLabel>
                                 <Field
                                     as={Select}
                                     id="useOpenAi-selection"
@@ -397,19 +341,7 @@ export function PlanManagerForm(props) {
 export function PlansManagerGrid(props) {
     const { records, onSelect } = props
     const classes = useStyles()
-
-    const renderWhatsapp = (row) => {
-        return row.useWhatsapp === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
-    };
-
-    const renderFacebook = (row) => {
-        return row.useFacebook === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
-    };
-
-    const renderInstagram = (row) => {
-        return row.useInstagram === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
-    };
-
+    
     const renderCampaigns = (row) => {
         return row.useCampaigns === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
     };
@@ -450,20 +382,17 @@ export function PlansManagerGrid(props) {
                     <TableRow>
                         <TableCell align="center" style={{ width: '1%' }}>#</TableCell>
                         <TableCell align="left">{i18n.t("plans.form.name")}</TableCell>
-                        <TableCell align="center">{i18n.t("plans.form.users")}</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.public")}</TableCell>
+                        <TableCell align="center">{i18n.t("plans.form.users")}</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.connections")}</TableCell>
                         <TableCell align="center">Filas</TableCell>
                         <TableCell align="center">Valor</TableCell>
-                        <TableCell align="center">Whatsapp</TableCell>
-                        <TableCell align="center">Facebook</TableCell>
-                        <TableCell align="center">Instagram</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.campaigns")}</TableCell>
                         <TableCell align="center">{i18n.t("plans.form.schedules")}</TableCell>
                         <TableCell align="center">Chat Interno</TableCell>
                         <TableCell align="center">API Externa</TableCell>
                         <TableCell align="center">Kanban</TableCell>
-                        <TableCell align="center">Talk.Ai</TableCell>
+                        <TableCell align="center">Open.Ai</TableCell>
                         <TableCell align="center">Integrações</TableCell>
                     </TableRow>
                 </TableHead>
@@ -476,14 +405,11 @@ export function PlansManagerGrid(props) {
                                 </IconButton>
                             </TableCell>
                             <TableCell align="left">{row.name || '-'}</TableCell>
-                            <TableCell align="center">{row.users || '-'}</TableCell>
                             <TableCell align="center">{row.isPublic ? "Sim": "Não" || '-'}</TableCell>
+                            <TableCell align="center">{row.users || '-'}</TableCell>
                             <TableCell align="center">{row.connections || '-'}</TableCell>
                             <TableCell align="center">{row.queues || '-'}</TableCell>
-                            <TableCell align="center">{i18n.t("plans.form.money")} {row.amount ? row.amount.toLocaleString('pt-br', { minimumFractionDigits: 2 }) : '00.00'}</TableCell>
-                            <TableCell align="center">{renderWhatsapp(row)}</TableCell>
-                            <TableCell align="center">{renderFacebook(row)}</TableCell>
-                            <TableCell align="center">{renderInstagram(row)}</TableCell>
+                            <TableCell align="center">{i18n.t("plans.form.money")} {row.value ? row.value.toLocaleString('pt-br', { minimumFractionDigits: 2 }) : '00.00'}</TableCell>
                             <TableCell align="center">{renderCampaigns(row)}</TableCell>
                             <TableCell align="center">{renderSchedules(row)}</TableCell>
                             <TableCell align="center">{renderInternalChat(row)}</TableCell>
@@ -511,10 +437,7 @@ export default function PlansManager() {
         users: 0,
         connections: 0,
         queues: 0,
-        amount: 0,
-        useWhatsapp: true,
-        useFacebook: true,
-        useInstagram: true,
+        value: 0,
         useCampaigns: true,
         useSchedules: true,
         useInternalChat: true,
@@ -546,7 +469,6 @@ export default function PlansManager() {
 
     const handleSubmit = async (data) => {
         setLoading(true)
-        console.log(data)
         try {
             if (data.id !== undefined) {
                 await update(data)
@@ -586,10 +508,7 @@ export default function PlansManager() {
             users: 0,
             connections: 0,
             queues: 0,
-            amount: 0,
-            useWhatsapp: true,
-            useFacebook: true,
-            useInstagram: true,
+            value: 0,
             useCampaigns: true,
             useSchedules: true,
             useInternalChat: true,
@@ -603,9 +522,6 @@ export default function PlansManager() {
 
     const handleSelect = (data) => {
 
-        let useWhatsapp = data.useWhatsapp === false ? false : true
-        let useFacebook = data.useFacebook === false ? false : true
-        let useInstagram = data.useInstagram === false ? false : true
         let useCampaigns = data.useCampaigns === false ? false : true
         let useSchedules = data.useSchedules === false ? false : true
         let useInternalChat = data.useInternalChat === false ? false : true
@@ -620,10 +536,7 @@ export default function PlansManager() {
             users: data.users || 0,
             connections: data.connections || 0,
             queues: data.queues || 0,
-            amount: data.amount?.toLocaleString('pt-br', { minimumFractionDigits: 2 }) || 0,
-            useWhatsapp,
-            useFacebook,
-            useInstagram,
+            value: data.value?.toLocaleString('pt-br', { minimumFractionDigits: 0 }) || 0,
             useCampaigns,
             useSchedules,
             useInternalChat,

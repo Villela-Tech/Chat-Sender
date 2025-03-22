@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import Typography from "@material-ui/core/Typography";
-import { Button, IconButton, StepContent, TextField } from "@material-ui/core";
+import { Button, Grid, IconButton, StepContent, TextField, FormControlLabel, Switch, FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/Add";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import SaveIcon from "@material-ui/icons/Save";
 import EditIcon from "@material-ui/icons/Edit";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
+import useQueues from "../../hooks/useQueues";
 
 const useStyles = makeStyles((theme) => ({
   root: {
     width: "100%",
-    height: 400,
+    //height: 400,
     [theme.breakpoints.down("sm")]: {
       maxHeight: "20vh",
     },
@@ -31,11 +32,42 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     marginBottom: theme.spacing(2),
   },
+  maxWidth: {
+    width: "100%",
+  },
+  verticalCenter: {
+    marginTop: "auto",
+    marginBottom: "auto",
+  },
 }));
 
 export function QueueOptionStepper({ queueId, options, updateOptions }) {
   const classes = useStyles();
   const [activeOption, setActiveOption] = useState(-1);
+  const [forwardQueue, setForwardQueue] = useState(null);
+  const [closeTicket, setCloseTicket] = useState(false);
+  const [allQueues, setAllQueues] = useState([]);
+  const [queues, setQueues] = useState([]);
+  const { findAll: findAllQueues } = useQueues();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMounted.current) {
+      const loadQueues = async () => {
+        const list = await findAllQueues();
+        setAllQueues(list);
+        setQueues(list);
+      };
+      loadQueues();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOption = (index) => async () => {
     setActiveOption(index);
@@ -65,17 +97,19 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
 
   const handleSave = async (option) => {
     try {
+      const tempOption = { ...option };
+      tempOption.forwardQueueId = tempOption.forwardQueueId || null;
       if (option.id) {
         await api.request({
           url: `/queue-options/${option.id}`,
           method: "PUT",
-          data: option,
+          data: tempOption,
         });
       } else {
         const { data } = await api.request({
           url: `/queue-options`,
           method: "POST",
-          data: option,
+          data: tempOption,
         });
         option.id = data.id;
       }
@@ -120,6 +154,23 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
     options[index].message = event.target.value;
     updateOptions();
   };
+
+  const handleToggleCloseTicket = (event, index) => {
+    options[index].closeTicket = !options[index].closeTicket;
+    if (options[index].closeTicket) {
+      options[index].forwardQueueId = "";
+    }
+    updateOptions();
+  }
+
+  const handleChangeForwardQueue = (value, index) => {
+    console.debug("Selected queue", value);
+    options[index].forwardQueueId = `${value}`;
+    if (options[index].forwardQueueId) {
+      options[index].closeTicket = false;
+    }
+    updateOptions();
+  }
 
   const renderTitle = (index) => {
     const option = options[index];
@@ -189,6 +240,47 @@ export function QueueOptionStepper({ queueId, options, updateOptions }) {
             className={classes.input}
             placeholder="Digite o texto da opção"
           />
+          <Grid spacing={3} container>
+          <Grid className={classes.verticalCenter} xs={12} sm={12} md={3} item>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={option.closeTicket}
+                  disabled={option.forwardQueueId && !option.closeTicket}
+                  color="primary"
+                  onChange={(event) => handleToggleCloseTicket(event, index)}
+                  name="closeTicket"
+                  size="small"
+                />
+              }
+              label="Close Ticket"
+            />
+          </Grid>
+
+          <Grid xs={12} sm={12} md={3} item>
+            <FormControl className={classes.maxWidth}>
+              <InputLabel>
+                Forward to Queue
+              </InputLabel>
+              <Select
+                value={option.forwardQueueId}
+                onChange={(event) => handleChangeForwardQueue(event.target.value, index)}
+                label="Select queue"
+                size="small"
+                disabled={option.closeTicket && !option.forwardQueueId}
+              >
+                <MenuItem key="noqueue" value="">
+                  None
+                </MenuItem>
+                {queues.map((queue) => (
+                  <MenuItem key={queue.id} value={queue.id}>
+                    {queue.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
         </>
       );
     }

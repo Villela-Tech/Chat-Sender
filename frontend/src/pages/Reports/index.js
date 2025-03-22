@@ -21,27 +21,23 @@ import TableRowSkeleton from "../../components/TableRowSkeleton";
 import { i18n } from "../../translate/i18n";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import MainContainer from "../../components/MainContainer";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { Can } from "../../components/Can";
 
-import { CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputLabel, MenuItem, Select, Switch, TextField, Tooltip, Typography } from "@material-ui/core";
+import { CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, TextField, Tooltip, Typography } from "@material-ui/core";
 import { UsersFilter } from "../../components/UsersFilter";
-import { TagsFilter } from "../../components/TagsFilter";
 import { WhatsappsFilter } from "../../components/WhatsappsFilter";
 import { StatusFilter } from "../../components/StatusFilter";
 import useDashboard from "../../hooks/useDashboard";
 
-import QueueSelectCustom from "../../components/QueueSelectCustom";
+import QueueSelect from "../../components/QueueSelect";
 import moment from "moment";
-import ShowTicketLogModal from "../../components/ShowTicketLogModal";
 
 import { blue, green } from "@material-ui/core/colors";
 import { Facebook, Forward, History, Instagram, SaveAlt, Visibility, WhatsApp } from "@material-ui/icons";
 import Autocomplete, { createFilterOptions } from "@material-ui/lab/Autocomplete";
-import { Field } from "formik";
+import { TagsFilter } from "../../components/TagsFilter";
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
@@ -70,7 +66,7 @@ const useStyles = makeStyles((theme) => ({
   },
   mainPaperFilter: {
     flex: 1,
-    overflow: 'auto',
+    // overflow: 'auto',
     height: '20vh',
     ...theme.scrollbarStylesSoftBig,
   },
@@ -103,15 +99,13 @@ const Reports = () => {
   const [selectedContactId, setSelectedContactId] = useState(null);
   const [selectedWhatsapp, setSelectedWhatsapp] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState([]);
-  const [selectedContact, setSelectedContact] = useState(null);
 
-  // const [tagIds, setTagIds] = useState([]);
+  const [tagIds, setTagIds] = useState([]);
   const [queueIds, setQueueIds] = useState([]);
   const [userIds, setUserIds] = useState([]);
   const [options, setOptions] = useState([]);
   const [dateFrom, setDateFrom] = useState(moment("1", "D").format("YYYY-MM-DD"));
   const [dateTo, setDateTo] = useState(moment().format("YYYY-MM-DD"));
-  const [onlyRated, setOnlyRated] = useState(false);
   const [totalTickets, setTotalTickets] = useState(0);
   const [tickets, setTickets] = useState([]);
 
@@ -137,22 +131,24 @@ const Reports = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam]);
+  }, []);
 
-  // const handleSelectedTags = (selecteds) => {
-  //   const tags = selecteds.map((t) => t.id);
-  //   setTagIds(tags);
-  // };
+  const handleSelectedTags = (selecteds) => {
+    const tags = selecteds.map((t) => t.id);
+    setTagIds(tags);
+  };
 
   const exportarGridParaExcel = async () => {
     setLoading(true); // Define o estado de loading como true durante o carregamento
+
+
 
     try {
       const data = await getReport({
         searchParam,
         contactId: selectedContactId,
         whatsappId: JSON.stringify(selectedWhatsapp),
-        // tags: JSON.stringify(tagIds),
+        tags: JSON.stringify(tagIds),
         users: JSON.stringify(userIds),
         queueIds: JSON.stringify(queueIds),
         status: JSON.stringify(selectedStatus),
@@ -161,14 +157,16 @@ const Reports = () => {
         dateTo,
         page: 1, // Passa o número da página para a API
         pageSize: 9999999, // Passa o tamanho da página para a API
-        onlyRated: onlyRated ? "true" : "false"
       });
-
 
       const ticketsData = data.tickets.map(ticket => {
         // Convertendo o campo createdAt para um objeto Date
         const createdAt = new Date(ticket.createdAt);
         const closedAt = new Date(ticket.closedAt);
+
+        const data = ticket.createdAt.slice(0, -5);
+        const hora = ticket.createdAt.slice(11, -5);
+
 
         const dataFechamento = closedAt.toLocaleDateString();
         const horaFechamento = closedAt.toLocaleTimeString();
@@ -184,22 +182,19 @@ const Reports = () => {
           Fila: ticket.queueName,
           Status: ticket.status,
           ÚltimaMensagem: ticket.lastMessage,
-          DataAbertura: dataCriacao,
-          HoraAbertura: horaCriacao,
-          DataFechamento: ticket.closedAt === null ? "" : dataFechamento,
-          HoraFechamento: ticket.closedAt === null ? "" : horaFechamento,
+          DataHoraAbertura: ticket.createdAt,
+          // HoraAbertura: horaCriacao,
+          DataHoraFechamento: ticket.closedAt === null ? "" : ticket.closedAt,
+          // HoraFechamento: ticket.closedAt === null ? "" : horaFechamento,
           TempoDeAtendimento: ticket.supportTime,
           nps: ticket.NPS,
         }
       });
 
-      console.log(ticketsData)
       const ws = XLSX.utils.json_to_sheet(ticketsData);
       const wb = XLSX.utils.book_new();
-
       XLSX.utils.book_append_sheet(wb, ws, 'RelatorioDeAtendimentos');
       XLSX.writeFile(wb, 'relatorio-de-atendimentos.xlsx');
-
 
       setPageNumber(pageNumber); // Atualiza o estado da página atual
     } catch (error) {
@@ -213,13 +208,13 @@ const Reports = () => {
 
   const handleFilter = async (pageNumber) => {
     setLoading(true); // Define o estado de loading como true durante o carregamento
-    console.log(onlyRated)
+
     try {
       const data = await getReport({
         searchParam,
         contactId: selectedContactId,
         whatsappId: JSON.stringify(selectedWhatsapp),
-        // tags: JSON.stringify(tagIds),
+        tags: JSON.stringify(tagIds),
         users: JSON.stringify(userIds),
         queueIds: JSON.stringify(queueIds),
         status: JSON.stringify(selectedStatus),
@@ -228,7 +223,6 @@ const Reports = () => {
         dateTo,
         page: pageNumber, // Passa o número da página para a API
         pageSize: pageSize, // Passa o tamanho da página para a API
-        onlyRated: onlyRated ? "true" : "false"
       });
 
       setTotalTickets(data.totalTickets.total);
@@ -261,23 +255,10 @@ const Reports = () => {
 
     setSelectedStatus(statusFilter);
   };
-  const IconChannel = (channel) => {
-    switch (channel) {
-      case "facebook":
-        return <Facebook style={{ color: "#3b5998", verticalAlign: "middle" }} />;
-      case "instagram":
-        return <Instagram style={{ color: "#e1306c", verticalAlign: "middle" }} />;
-      case "whatsapp":
-        return <WhatsApp style={{ color: "#25d366", verticalAlign: "middle" }} />
-      default:
-        return "error";
-    }
-  };
 
   const renderOption = (option) => {
     if (option.number) {
       return <>
-        {IconChannel(option.channel)}
         <Typography component="span" style={{ fontSize: 14, marginLeft: "10px", display: "inline-flex", alignItems: "center", lineHeight: "2" }}>
           {option.name} - {option.number}
         </Typography>
@@ -357,13 +338,6 @@ const Reports = () => {
 
   return (
     <MainContainer className={classes.mainContainer}>
-      {openTicketMessageDialog && (
-        <ShowTicketLogModal
-          isOpen={openTicketMessageDialog}
-          handleClose={() => setOpenTicketMessageDialog(false)}
-          ticketId={ticketOpen.id}
-        />
-      )}
       <Title>{i18n.t("reports.title")}</Title>
 
       <MainHeader className={classes.mainHeaderFilter} style={{ display: 'flex' }}>
@@ -382,11 +356,11 @@ const Reports = () => {
             <Grid item xs={12} md={3} xl={3}>
               <UsersFilter onFiltered={handleSelectedUsers} />
             </Grid>
-            {/* <Grid item xs={12} md={4} xl={4}>
+            <Grid item xs={12} md={4} xl={4}>
               <TagsFilter onFiltered={handleSelectedTags} />
-            </Grid> */}
+            </Grid>
             <Grid item xs={12} md={3} xl={3} style={{ marginTop: '-13px' }}>
-              <QueueSelectCustom
+              <QueueSelect
                 selectedQueueIds={queueIds}
                 onChange={values => setQueueIds(values)}
               />
@@ -421,19 +395,7 @@ const Reports = () => {
               />
             </Grid>
             <Grid item xs={12} sm={3} md={3} style={{ display: 'flex', justifyContent: 'center' }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    color="primary"
-                    checked={onlyRated}
-                    onChange={() => setOnlyRated(!onlyRated)}
-                  />
-                }
-
-                label={i18n.t("reports.buttons.onlyRated")}
-              />
               <IconButton onClick={exportarGridParaExcel} aria-label="Exportar para Excel">
-
                 <SaveAlt />
               </IconButton>
               <Button
@@ -492,21 +454,6 @@ const Reports = () => {
                       variant="body2"
                       color="textPrimary"
                     >
-                      <Tooltip title="Logs do Ticket">
-                        <History
-                          onClick={() => {
-                            setOpenTicketMessageDialog(true)
-                            setTicketOpen(ticket)
-                          }}
-                          fontSize="small"
-                          style={{
-                            color: blue[700],
-                            cursor: "pointer",
-                            marginLeft: 10,
-                            verticalAlign: "middle"
-                          }}
-                        />
-                      </Tooltip>
                       <Tooltip title="Acessar Ticket">
                         <Forward
                           onClick={() => { history.push(`/tickets/${ticket.uuid}`) }}

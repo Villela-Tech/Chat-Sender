@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { parseISO, format } from "date-fns";
+
 import * as Yup from "yup";
 import { Formik, FieldArray, Form, Field } from "formik";
 import { toast } from "react-toastify";
@@ -16,14 +16,12 @@ import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Switch from "@material-ui/core/Switch";
 
 import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import { TagsContainer } from "../TagsContainer";
-// import AsyncSelect from "../AsyncSelect";
+import { Switch } from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
 	root: {
@@ -58,7 +56,7 @@ const useStyles = makeStyles(theme => ({
 const ContactSchema = Yup.object().shape({
 	name: Yup.string()
 		.min(2, "Too Short!")
-		.max(250, "Too Long!")
+		.max(50, "Too Long!")
 		.required("Required"),
 	number: Yup.string().min(8, "Too Short!").max(50, "Too Long!"),
 	email: Yup.string().email("Invalid email"),
@@ -73,11 +71,11 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		number: "",
 		email: "",
 		disableBot: false,
-		lgpdAcceptedAt: ""
 	};
 
 	const [contact, setContact] = useState(initialState);
 	const [disableBot, setDisableBot] = useState(false);
+
 	useEffect(() => {
 		return () => {
 			isMounted.current = false;
@@ -127,7 +125,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 			}
 			toast.success(i18n.t("contactModal.success"));
 		} catch (err) {
-			toastError(err);
+			toastError(err.request.response);
 		}
 	};
 
@@ -137,7 +135,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 				<DialogTitle id="form-dialog-title">
 					{contactId
 						? `${i18n.t("contactModal.title.edit")}`
-						: `${i18n.t("contactModal.title.add")}`}
+						: `${i18n.t("contactModal.title.add")} `}
 				</DialogTitle>
 				<Formik
 					initialValues={contact}
@@ -150,7 +148,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 						}, 400);
 					}}
 				>
-					{({ values, errors, touched, isSubmitting, setFieldValue }) => (
+					{({ values, errors, touched, isSubmitting }) => (
 						<Form>
 							<DialogContent dividers>
 								<Typography variant="subtitle1" gutterBottom>
@@ -190,9 +188,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 										variant="outlined"
 									/>
 								</div>
-								<div>
-									<TagsContainer contact={contact} className={classes.textField} />
-								</div>
 								<Typography
 									style={{ marginBottom: 8, marginTop: 12 }}
 									variant="subtitle1"
@@ -213,24 +208,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 								>
 									{i18n.t("contactModal.form.whatsapp")} {contact?.whatsapp ? contact?.whatsapp.name : ""}
 								</Typography>
-								<Typography
-									style={{ marginBottom: 8, marginTop: 12 }}
-									variant="subtitle1"
-								>
-									{i18n.t("contactModal.form.termsLGDP")} {contact?.lgpdAcceptedAt ? format(new Date(contact?.lgpdAcceptedAt), "dd/MM/yyyy 'às' HH:mm") : ""}
-								</Typography>
-
-								{/* <Typography variant="subtitle1" gutterBottom>{i18n.t("contactModal.form.customer_portfolio")}</Typography> */}
-								{/* <div style={{ marginTop: 10 }}>
-									<AsyncSelect url="/users" dictKey={"users"}
-										initialValue={values.user} width="100%" label={i18n.t("contactModal.form.attendant")}
-										onChange={(event, value) => setFieldValue("userId", value ? value.id : null)} />
-								</div>
-								<div style={{ marginTop: 10 }}>
-									<AsyncSelect url="/queue" dictKey={null}
-										initialValue={values.queue} width="100%" label={i18n.t("contactModal.form.queue")}
-										onChange={(event, value) => setFieldValue("queueId", value ? value.id : null)} />
-								</div> */}
 								<Typography
 									style={{ marginBottom: 8, marginTop: 12 }}
 									variant="subtitle1"

@@ -30,18 +30,14 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { Grid } from "@material-ui/core";
 import { isArray } from "lodash";
-// import { SocketContext } from "../../context/Socket/SocketContext";
+import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_QUICKMESSAGES") {
-    //console.log("aqui");
-    //console.log(action);
-    //console.log(action.payload);
     const quickmessages = action.payload;
     const newQuickmessages = [];
-    //console.log(newQuickmessages);
 
     if (isArray(quickmessages)) {
       quickmessages.forEach((quickemessage) => {
@@ -107,10 +103,10 @@ const Quickemessages = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [quickemessages, dispatch] = useReducer(reducer, []);
-  //   const socketManager = useContext(SocketContext);
-  const { user, socket } = useContext(AuthContext);
-
+  const { user } = useContext(AuthContext);
   const { profile } = user;
+
+  const socketManager = useContext(SocketContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -128,22 +124,20 @@ const Quickemessages = () => {
 
   useEffect(() => {
     const companyId = user.companyId;
-    // const socket = socketManager.GetSocket();
+    const socket = socketManager.getSocket(companyId);
 
-    const onQuickMessageEvent = (data) => {
+    socket.on(`company${companyId}-quickemessage`, (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_QUICKMESSAGES", payload: data.record });
       }
       if (data.action === "delete") {
         dispatch({ type: "DELETE_QUICKMESSAGE", payload: +data.id });
       }
-    };
-    socket.on(`company-${companyId}-quickemessage`, onQuickMessageEvent);
-
+    });
     return () => {
-      socket.off(`company-${companyId}-quickemessage`, onQuickMessageEvent);
+      socket.disconnect();
     };
-  }, [socket]);
+  }, [socketManager]);
 
   const fetchQuickemessages = async () => {
     try {
@@ -178,7 +172,6 @@ const Quickemessages = () => {
   };
 
   const handleEditQuickemessage = (quickemessage) => {
-    //console.log(quickemessage);
     setSelectedQuickemessage(quickemessage);
     setQuickMessageDialogOpen(true);
   };
@@ -279,11 +272,10 @@ const Quickemessages = () => {
                 {i18n.t("quickMessages.table.shortcode")}
               </TableCell>
 
+              <TableCell align="center">Tipo de Mensagem</TableCell>
+
               <TableCell align="center">
                 {i18n.t("quickMessages.table.mediaName")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("quickMessages.table.status")}
               </TableCell>
               <TableCell align="center">
                 {i18n.t("quickMessages.table.actions")}
@@ -295,16 +287,10 @@ const Quickemessages = () => {
               {quickemessages.map((quickemessage) => (
                 <TableRow key={quickemessage.id}>
                   <TableCell align="center">{quickemessage.shortcode}</TableCell>
+                  <TableCell align="center">{quickemessage.isCategory ? 'Menu' : 'Atalho'}</TableCell>
 
                   <TableCell align="center">
                     {quickemessage.mediaName ?? i18n.t("quickMessages.noAttachment")}
-                  </TableCell>
-                  <TableCell align="center">
-                    {quickemessage.geral === true ? (
-                      <CheckCircleIcon style={{ color: 'green' }} />
-                    ) : (
-                      ''
-                    )}
                   </TableCell>
                   <TableCell align="center">
                     <IconButton
