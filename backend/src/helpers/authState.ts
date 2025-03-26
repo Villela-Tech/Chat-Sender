@@ -1,13 +1,3 @@
-/*
-
-   NÃO REMOVER
-
-   Fornecido por Claudemir Todo Bom
-   Licenciado para Raphael Batista / Equipechat
-   
-   Licença vitalícia e exclusiva. Não pode ser sublicenciado a terceiros
-
- */
 
 import type {
   AuthenticationCreds,

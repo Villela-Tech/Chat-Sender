@@ -161,7 +161,7 @@ export default function Whitelabel(props) {
   const logoDarkInput = useRef(null);
   const logoFaviconInput = useRef(null);
   const appNameInput = useRef(null);
-  const [appName, setAppName] = useState(settingsLoaded.appName || "AutoAtende");
+  const [appName, setAppName] = useState(settingsLoaded.appName || "VB Sender");
 
   const { update } = useSettings();
 

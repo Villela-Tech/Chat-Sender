@@ -3,7 +3,7 @@
    NÃO REMOVER
 
    Fornecido por Claudemir Todo Bom
-   Licenciado para Raphael Batista / Equipechat
+   Licenciado para Raphael Batista / VB Sender
    
    Licença vitalícia e exclusiva. Não pode ser sublicenciado a terceiros
 

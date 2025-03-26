@@ -17,7 +17,7 @@ const Copyright = () => {
     <Typography variant="body2" color="primary" align="center">
       {"Copyright "}
       <Link color="primary" href="#">
-        PLW
+        VB Sender
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
   root: {
     width: "100vw",
     height: "100vh",
-    background: "linear-gradient(to right, #0000FF , #0000CD , #00008B)",
+    background: "linear-gradient(to right, #3CB5C9, #3CB5C9, #3CB5C9)",
     backgroundRepeat: "no-repeat",
     backgroundSize: "100% 100%",
     backgroundPosition: "center",
@@ -41,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
   },
 
   paper: {
-    backgroundColor: theme.palette.login, //DARK MODE PLW DESIGN//
+    backgroundColor: "rgb(60, 181, 201)", //DARK MODE PLW DESIGN//
     display: "flex",
     flexDirection: "column",
     alignItems: "center",

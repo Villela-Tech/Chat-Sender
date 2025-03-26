@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     "&.MuiButton-root": {
       margin: "20px 0px 16px",
-      backgroundColor: "rgb(52, 137, 255)",
+      backgroundColor: "rgb(60, 181, 201)",
       borderRadius: " 30px",
     },
 
@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: "none",
     },
 
-    backgroundColor: "rgb(52, 137, 255)",
+    backgroundColor: "rgb(60, 181, 201)",
     margin: theme.spacing(3, 0, 2),
     WebkitTextFillColor: "#FFF",
   },
@@ -132,7 +132,7 @@ const SignUp = () => {
           <h4 className="h4">⚡ Cadastre-se</h4>
           <div>
             <span className="span">
-              👋🏻 Comece seu <b>teste GRATUITO</b> de 3 dias do Equipechat em
+              👋🏻 Comece seu <b>teste GRATUITO</b> de 3 dias do VB Sender em
               apenas 3 etapas!{" "}
               <b>Não se preocupe, nós não pedimos dados do seu cartão.</b> 💳
             </span>
@@ -274,7 +274,7 @@ const SignUp = () => {
           <p className="p">
             Copyright ©{" "}
             <a href={"#"} target={"_blank"}>
-              Equipechat{""}
+              VB Sender{""}
             </a>{" "}
             2024{" "}
           </p>
