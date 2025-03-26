@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
   root: {
     width: "100vw",
     height: "100vh",
-    background: "linear-gradient(to right, #3CB5C9, #3CB5C9, #3CB5C9)",
+    background: "linear-gradient(to right, #2A97A8, #2A97A8, #2A97A8)",
     backgroundRepeat: "no-repeat",
     backgroundSize: "100% 100%",
     backgroundPosition: "center",
@@ -114,7 +114,7 @@ const Login = () => {
           <p>
             Copyright ©{" "}
             <a href={"#"} target={"_blank"}>
-              Equipechat{""}
+              Villela Tech{""}
             </a>{" "}
             2024{" "}
           </p>

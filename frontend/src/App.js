@@ -62,7 +62,7 @@ const App = () => {
 
             setPrimaryColorLight: (color) => {
                 if (!color || !color.startsWith("#")) {
-                    color = "#3CB5C9";
+                    color = "#2A97A8";
                 }
                 setPrimaryColorLight(color);
             },
@@ -114,7 +114,7 @@ const App = () => {
                 },
                 "&::-webkit-scrollbar-thumb": {
                     boxShadow: 'inset 0 0 6px rgba(0, 0, 0, 0.3)',
-                    backgroundColor: "#3CB5C9",
+                    backgroundColor: "#2A97A8",
                 },
             },
             scrollbarStylesSoft: {
@@ -122,7 +122,7 @@ const App = () => {
                     width: "8px",
                 },
                 "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: mode === "light" ? "#3CB5C9" : "#333333",
+                    backgroundColor: mode === "light" ? "#2A97A8" : "#333333",
                 },
 
             },
@@ -132,22 +132,22 @@ const App = () => {
                     borderRadius: "8px",
                 },
                 "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: mode === "light" ? "#3CB5C9" : "#fff !important",
+                    backgroundColor: mode === "light" ? "#2A97A8" : "#fff !important",
                     borderRadius: "8px",
                 },
             },
 
               palette: {
                  type: mode,
-                 primary: { main: "#3CB5C9" },
-                 textPrimary: mode === "light" ? "#3CB5C9" : "#FFFFFF",
-                 borderPrimary: mode === "light" ? "#3CB5C9" : "#FFFFFF",
+                 primary: { main: "#2A97A8" },
+                 textPrimary: mode === "light" ? "#2A97A8" : "#FFFFFF",
+                 borderPrimary: mode === "light" ? "#2A97A8" : "#FFFFFF",
                  dark: { main: mode === "light" ? "#333333" : "#F3F3F3" },
                  light: { main: mode === "light" ? "#F3F3F3" : "#333333" },
                  tabHeaderBackground: mode === "light" ? "#EEE" : "#333",
                  optionsBackground: mode === "light" ? "#fafafa" : "#333",
                  options: mode === "light" ? "#fafafa" : "#666",
-                 fontecor: mode === "light" ? "#3CB5C9" : "#fff",
+                 fontecor: mode === "light" ? "#2A97A8" : "#fff",
                  fancyBackground: mode === "light" ? "#fafafa" : "#333",
                  bordabox: mode === "light" ? "#eee" : "#333",
                  newmessagebox: mode === "light" ? "#eee" : "#333",
@@ -162,13 +162,13 @@ const App = () => {
                  total: mode === "light" ? "#fff" : "#222",
                  messageIcons: mode === "light" ? "grey" : "#F3F3F3",
                  inputBackground: mode === "light" ? "#FFFFFF" : "#333",
-                 barraSuperior: mode === "light" ? "linear-gradient(to right, #fff, #3CB5C9, #3CB5C9)" : "#3CB5C9",
+                 barraSuperior: mode === "light" ? "linear-gradient(to right, #fff, #2A97A8, #2A97A8)" : "#2A97A8",
                  boxticket: mode === "light" ? "#EEE" : "#333",
                  campaigntab: mode === "light" ? "#fff" : "#333",
-                 drawerIcons: mode === "light" ? "#3CB5C9" : "inherit",
-                 drawerIcons: mode === "light" ? "#3CB5C9" : "inherit",
+                 drawerIcons: mode === "light" ? "#2A97A8" : "inherit",
+                 drawerIcons: mode === "light" ? "#2A97A8" : "inherit",
                  drawerBackground: mode === "light" ? "#fff" : "#333",
-                 drawerText: mode === "light" ? "#3CB5C9" : "#fff",
+                 drawerText: mode === "light" ? "#2A97A8" : "#fff",
 
                  // background: '#10175b',
                  // color: 'white',
@@ -224,7 +224,7 @@ const App = () => {
         // console.log("AppLogoFavicon");
 
         getPublicSetting("primaryColorLight")
-            .then((color) => { setPrimaryColorLight(color || "#3CB5C9") })
+            .then((color) => { setPrimaryColorLight(color || "#2A97A8") })
             .catch((error) => { console.log("Error reading setting", error); });
         getPublicSetting("primaryColorDark")
             .then((color) => { setPrimaryColorDark(color || "#39ACE7") })
