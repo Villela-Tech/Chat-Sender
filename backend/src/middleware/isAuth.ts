@@ -17,7 +17,7 @@ const isAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    throw new AppError("ERR_SESSION_EXPIRED", 401);
+    throw new AppError("ERR_NO_TOKEN_PROVIDED", 401);
   }
 
   const [, token] = authHeader.split(" ");
@@ -25,16 +25,23 @@ const isAuth = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const decoded = verify(token, authConfig.secret);
     const { id, profile, companyId } = decoded as TokenPayload;
+    
     req.user = {
       id,
       profile,
       companyId
     };
-  } catch (err) {
-    throw new AppError("Invalid token. We'll try to assign a new one on next request", 403 );
-  }
 
-  return next();
+    return next();
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      throw new AppError("ERR_TOKEN_EXPIRED", 401);
+    }
+    if (err.name === 'JsonWebTokenError') {
+      throw new AppError("ERR_INVALID_TOKEN", 401);
+    }
+    throw new AppError("ERR_AUTH_ERROR", 401);
+  }
 };
 
 export default isAuth;

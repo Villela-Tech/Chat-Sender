@@ -77,308 +77,92 @@ const reducer = (state, action) => {
   if (action.type === "LOAD_TICKETS") {
     const newTickets = action.payload;
 
-    newTickets.forEach((ticket) => {
-      const ticketIndex = state.findIndex((t) => t.id === ticket.id);
-      if (ticketIndex !== -1) {
-        state[ticketIndex] = ticket;
-        if (ticket.unreadMessages > 0) {
-          state.unshift(state.splice(ticketIndex, 1)[0]);
-        }
-      } else {
-        state.push(ticket);
-      }
-    });
-
-    return [...state];
+    return newTickets;
   }
+  if (action.type === "UPDATE_TICKETS") {
+    const updatedTicket = action.payload;
+    const ticketIndex = state.findIndex(t => t.id === updatedTicket.id);
 
-  if (action.type === "RESET_UNREAD") {
-    const ticketId = action.payload;
-
-    const ticketIndex = state.findIndex((t) => t.id === ticketId);
     if (ticketIndex !== -1) {
-      state[ticketIndex].unreadMessages = 0;
+      state[ticketIndex] = updatedTicket;
     }
-
-    return [...state];
   }
+  if (action.type === "FILTER_TICKETS") {
+    const ticketToFilter = action.payload;
+    const ticketIndex = state.findIndex(t => t.id === ticketToFilter.id);
 
-  if (action.type === "UPDATE_TICKET") {
-    const ticket = action.payload;
-
-    const ticketIndex = state.findIndex((t) => t.id === ticket.id);
-    if (ticketIndex !== -1) {
-      state[ticketIndex] = ticket;
-    } else {
-      state.unshift(ticket);
-    }
-
-    return [...state];
-  }
-
-  if (action.type === "UPDATE_TICKET_UNREAD_MESSAGES") {
-    const ticket = action.payload;
-
-    const ticketIndex = state.findIndex((t) => t.id === ticket.id);
-    if (ticketIndex !== -1) {
-      state[ticketIndex] = ticket;
-      state.unshift(state.splice(ticketIndex, 1)[0]);
-    } else {
-      state.unshift(ticket);
-    }
-
-    return [...state];
-  }
-
-  if (action.type === "UPDATE_TICKET_CONTACT") {
-    const contact = action.payload;
-    const ticketIndex = state.findIndex((t) => t.contactId === contact.id);
-    if (ticketIndex !== -1) {
-      state[ticketIndex].contact = contact;
-    }
-    return [...state];
-  }
-  
-  if (action.type === "UPDATE_TICKET_PRESENCE") {
-    const data = action.payload;
-    const ticketIndex = state.findIndex((t) => t.id === data.ticketId);
-    if (ticketIndex !== -1) {
-      state[ticketIndex].presence = data.presence;
-    }
-    return [...state];
-  }
-
-  if (action.type === "DELETE_TICKET") {
-    const ticketId = action.payload;
-    const ticketIndex = state.findIndex((t) => t.id === ticketId);
     if (ticketIndex !== -1) {
       state.splice(ticketIndex, 1);
     }
-
-    return [...state];
   }
-
-  if (action.type === "RESET") {
-    return [];
+  if (action.type === "SET_TICKETS") {
+    return action.payload;
   }
+  return state;
 };
 
 const TicketsListCustom = (props) => {
-  const {
-    status,
-    searchParam,
-    tags,
-    users,
-    showAll,
-    selectedQueueIds,
-    updateCount,
-    style,
-  } = props;
   const classes = useStyles();
-  const [pageNumber, setPageNumber] = useState(1);
-  const [ticketsList, dispatch] = useReducer(reducer, []);
-  const [visibleTicket, setVisibleTicket] = useState(false);
+  const { tickets = [], loading = false, hasMore = false, searchParam = "", showAll = false, selectedQueueIds = [], selectedTags = [], selectedUsers = [] } = props;
   const { user } = useContext(AuthContext);
-  const { profile, queues } = user;
-  const { getAll } = useSettings();
-
-  const socketManager = useContext(SocketContext);
-
-  useEffect(() => {
-    getAll()
-      .then((response) => {
-        const userVisibleTicket = response.some((setting) => {
-          return (setting?.key === "userViewTicketsWithoutQueue" &&
-            setting?.value === "enabled")
-        })
-        setVisibleTicket(userVisibleTicket);
-      });
-
-
-  }, [])
+  const { socketManager } = useContext(SocketContext);
+  const [ticketsState, dispatch] = useReducer(reducer, []);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreTickets, setHasMoreTickets] = useState(false);
+  const [loadingTickets, setLoadingTickets] = useState(true);
 
   useEffect(() => {
-    dispatch({ type: "RESET" });
-    setPageNumber(1);
-  }, [status, searchParam, dispatch, showAll, tags, users, selectedQueueIds]);
-
-  const { tickets, hasMore, loading } = useTickets({
-    pageNumber,
-    searchParam,
-    status,
-    showAll,
-    tags: JSON.stringify(tags),
-    users: JSON.stringify(users),
-    queueIds: JSON.stringify(selectedQueueIds),
-  });
-
-  useEffect(() => {
-    const queueIds = queues.map((q) => q.id);
-    const filteredTickets = tickets.filter(
-      (t) => {
-        return (
-          queueIds.indexOf(t.queueId) > -1 ||
-          (visibleTicket && queueIds.indexOf(t.queueId) === -1 &&
-            (t.userId === user.id || t.userId === null || t.userId === undefined))
-        )
-      }
-    );
-
-    if (profile === "user") {
-      dispatch({ type: "LOAD_TICKETS", payload: filteredTickets });
-    } else {
-      dispatch({ type: "LOAD_TICKETS", payload: tickets });
+    if (tickets) {
+      dispatch({ type: "SET_TICKETS", payload: tickets });
+      setLoadingTickets(false);
     }
-  }, [tickets, status, searchParam, queues, profile, visibleTicket]);
+  }, [tickets]);
 
   useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
-
-    const shouldUpdateTicket = (ticket) =>
-      (!ticket.userId || ticket.userId === user?.id || showAll) &&
-      (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
-
-    const notBelongsToUserQueues = (ticket) =>
-      ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
-
-    socket.on("connect", () => {
-      if (status) {
-        socket.emit("joinTickets", status);
-      } else {
-        socket.emit("joinNotification");
-      }
-    });
-
-    socket.on(`company-${companyId}-ticket`, (data) => {
-
-      if (data.action === "updateUnread") {
-        dispatch({
-          type: "RESET_UNREAD",
-          payload: data.ticketId,
-        });
-      }
-
-      if (data.action === "update" && shouldUpdateTicket(data.ticket) && data.ticket.status === status) {
-        dispatch({
-          type: "UPDATE_TICKET",
-          payload: data.ticket,
-        });
-      }
-
-      if (data.action === "update" && notBelongsToUserQueues(data.ticket)) {
-        dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_TICKET", payload: data.ticketId });
-      }
-    });
-
-    socket.on(`company-${companyId}-appMessage`, (data) => {
-      const queueIds = queues.map((q) => q.id);
-      if (
-        profile === "user" &&
-        (queueIds.indexOf(data.ticket.queue?.id) === -1 ||
-          data.ticket.queue === null)
-      ) {
-        return;
-      }
-
-      if (data.action === "create" && shouldUpdateTicket(data.ticket) && ( status === undefined || data.ticket.status === status)) {
-        dispatch({
-          type: "UPDATE_TICKET_UNREAD_MESSAGES",
-          payload: data.ticket,
-        });
-      }
-    });
-
-    socket.on(`company-${companyId}-contact`, (data) => {
-      if (data.action === "update") {
-        dispatch({
-          type: "UPDATE_TICKET_CONTACT",
-          payload: data.contact,
-        });
-      }
-    });
-
-    socket.on(`company-${companyId}-presence`, (data) => {
-      dispatch({
-        type: "UPDATE_TICKET_PRESENCE",
-        payload: data,
-      });
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [status, showAll, user, selectedQueueIds, tags, users, profile, queues, visibleTicket, socketManager]);
-
-  // useEffect(() => {
-  //   if (typeof updateCount === "function") {
-  //     updateCount(ticketsList.length);
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [ticketsList]);
+    if (hasMore !== undefined) {
+      setHasMoreTickets(hasMore);
+    }
+  }, [hasMore]);
 
   useEffect(() => {
-    const count = ticketsList.filter(ticket => !ticket.isGroup).length;
-    if (typeof updateCount === "function") {
-      updateCount(count);
+    if (loading !== undefined) {
+      setLoadingTickets(loading);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketsList, updateCount]);
+  }, [loading]);
 
-  const loadMore = () => {
-    setPageNumber((prevState) => prevState + 1);
-  };
+  const shouldUpdateTicket = (ticket) =>
+    (!ticket?.userId || ticket.userId === user?.id || showAll) &&
+    (!selectedQueueIds?.length || selectedQueueIds.includes(ticket?.queueId)) &&
+    (!selectedTags?.length || ticket?.tags?.some(tag => selectedTags.includes(tag.id))) &&
+    (!selectedUsers?.length || selectedUsers.includes(ticket?.userId));
 
-  const handleScroll = (e) => {
-    if (!hasMore || loading) return;
+  const notBelongsToUserQueues = (ticket) =>
+    ticket?.queueId && selectedQueueIds?.indexOf(ticket.queueId) === -1;
 
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+  const filteredTickets = ticketsState.filter(ticket => shouldUpdateTicket(ticket));
 
-    if (scrollHeight - (scrollTop + 100) < clientHeight) {
-      loadMore();
-    }
-  };
+  if (loadingTickets) {
+    return <TicketsListSkeleton />;
+  }
 
   return (
-    <Paper className={classes.ticketsListWrapper} style={style}>
-      <Paper
-        square
-        name="closed"
-        elevation={0}
-        className={classes.ticketsList}
-        onScroll={handleScroll}
-      >
-        <List style={{ paddingTop: 0 }}>
-          {ticketsList.length === 0 && !loading ? (
-            <div className={classes.noTicketsDiv}>
-              <span className={classes.noTicketsTitle}>
-                {i18n.t("ticketsList.noTicketsTitle")}
-              </span>
-              <p className={classes.noTicketsText}>
-                {i18n.t("ticketsList.noTicketsMessage")}
-              </p>
-            </div>
-          ) : (
-            // <>
-            //   {ticketsList.map((ticket) => (
-            //     <TicketListItem ticket={ticket} key={ticket.id} />
-            //   ))}
-            // </>
-            <>
-              {ticketsList
-                .filter(ticket => ticket.isGroup.toString() === "false")
-                .map((ticket) => (
-                  <TicketListItem ticket={ticket} key={ticket.id} />
-                ))}
-            </>
-          )}
-          {loading && <TicketsListSkeleton />}
-        </List>
-      </Paper>
+    <Paper className={classes.ticketsListWrapper} square>
+      <List className={classes.ticketsList}>
+        {filteredTickets.length > 0 ? (
+          filteredTickets.map(ticket => (
+            <TicketListItem
+              key={ticket.id}
+              ticket={ticket}
+              ticketId={ticket.id}
+            />
+          ))
+        ) : (
+          <div className={classes.noTickets}>
+            {i18n.t("ticketsList.noTickets")}
+          </div>
+        )}
+      </List>
     </Paper>
   );
 };

@@ -1,5 +1,6 @@
 import { QueryInterface } from "sequelize";
 import { hash } from "bcryptjs";
+import TicketsListCustom from "../TicketsListCustom";
 
 module.exports = {
   up: (queryInterface: QueryInterface) => {
