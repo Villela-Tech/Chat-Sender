@@ -152,12 +152,21 @@ const CustomLink = ({ children, ...props }) => (
 const MarkdownWrapper = ({ children }) => {
 	const boldRegex = /\*(.*?)\*/g;
 	const tildaRegex = /~(.*?)~/g;
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
 
-	if (children && boldRegex.test(children)) {
-		children = children.replace(boldRegex, "**$1**");
-	}
-	if (children && tildaRegex.test(children)) {
-		children = children.replace(tildaRegex, "~~$1~~");
+	if (children) {
+		// Converte URLs em links Markdown
+		if (urlRegex.test(children)) {
+			children = children.replace(urlRegex, (url) => `[${url}](${url})`);
+		}
+
+		// Processa outros formatos
+		if (boldRegex.test(children)) {
+			children = children.replace(boldRegex, "**$1**");
+		}
+		if (tildaRegex.test(children)) {
+			children = children.replace(tildaRegex, "~~$1~~");
+		}
 	}
 
 	const options = React.useMemo(() => {
@@ -165,7 +174,12 @@ const MarkdownWrapper = ({ children }) => {
 			disableParsingRawHTML: true,
 			forceInline: true,
 			overrides: {
-				a: { component: CustomLink },
+				a: { 
+					component: CustomLink,
+					props: {
+						className: "message-link"
+					}
+				},
 			},
 		};
 

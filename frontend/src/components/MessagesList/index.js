@@ -194,6 +194,13 @@ const useStyles = makeStyles((theme) => ({
   textContentItem: {
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px",
+    "& a.message-link": {
+      color: "#2196f3",
+      textDecoration: "underline",
+      "&:hover": {
+        color: "#1976d2",
+      }
+    }
   },
 
   textContentItemDeleted: {
