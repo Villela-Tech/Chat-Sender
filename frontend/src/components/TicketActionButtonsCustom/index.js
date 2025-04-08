@@ -57,22 +57,34 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 	const handleUpdateTicketStatus = async (e, status, userId) => {
 		setLoading(true);
 		try {
-			await api.put(`/tickets/${ticket.id}`, {
+			console.debug("Atualizando status do ticket:", { ticketId: ticket.id, status, userId });
+			
+			// Prepara os dados do ticket mantendo informações importantes
+			const ticketData = {
 				status: status,
 				userId: userId || null,
+				queueId: ticket.queueId || null,
 				useIntegration: status === "closed" ? false : ticket.useIntegration,
-				promptId: status === "closed" ? false : ticket.promptId,
-				integrationId: status === "closed" ? false : ticket.integrationId
-			});
+				promptId: status === "closed" ? null : ticket.promptId,
+				integrationId: status === "closed" ? null : ticket.integrationId
+			};
+
+			console.debug("Dados a serem enviados:", ticketData);
+			
+			await api.put(`/tickets/${ticket.id}`, ticketData);
 
 			setLoading(false);
 			if (status === "open") {
 				setCurrentTicket({ ...ticket, code: "#open" });
 			} else {
-				setCurrentTicket({ id: null, code: null })
-				history.push("/tickets");
+				setCurrentTicket({ id: null, code: null });
+				// Força uma atualização da lista antes de redirecionar
+				setTimeout(() => {
+					history.push("/tickets");
+				}, 500);
 			}
 		} catch (err) {
+			console.error("Erro ao atualizar ticket:", err);
 			setLoading(false);
 			toastError(err);
 		}
@@ -123,23 +135,6 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 							</IconButton>
 						</Tooltip>
 					</ThemeProvider>
-					{/* <ButtonWithSpinner
-						loading={loading}
-						startIcon={<Replay />}
-						size="small"
-						onClick={e => handleUpdateTicketStatus(e, "pending", null)}
-					>
-						{i18n.t("messagesList.header.buttons.return")}
-					</ButtonWithSpinner>
-					<ButtonWithSpinner
-						loading={loading}
-						size="small"
-						variant="contained"
-						color="primary"
-						onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
-					>
-						{i18n.t("messagesList.header.buttons.resolve")}
-					</ButtonWithSpinner> */}
 					<IconButton onClick={handleOpenTicketOptionsMenu}>
 						<MoreVert />
 					</IconButton>

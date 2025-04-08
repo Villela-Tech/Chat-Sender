@@ -244,14 +244,20 @@ const TicketListItemCustom = ({ ticket }) => {
         promptId: null,
         integrationId: null
       });
+
+      // Força uma atualização da lista antes de redirecionar
+      setTimeout(() => {
+        if (isMounted.current) {
+          setLoading(false);
+          history.push("/tickets");
+        }
+      }, 500);
     } catch (err) {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
       toastError(err);
     }
-    if (isMounted.current) {
-      setLoading(false);
-    }
-    history.push(`/tickets/`);
   };
 
   const handleReopenTicket = async (id) => {

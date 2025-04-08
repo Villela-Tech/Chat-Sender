@@ -49,27 +49,27 @@ class ManagedSocket {
   
   off(event, callback) {
     const i = this.callbacks.findIndex((c) => c.event === event && c.callback === callback);
-    this.callbacks.splice(i, 1);
+    if (i !== -1) {
+      this.callbacks.splice(i, 1);
+    }
     return this.rawSocket.off(event, callback);
   }
   
   emit(event, ...params) {
     if (event.startsWith("join")) {
-      this.joins.push({ event: event.substring(4), params });
-      console.log("Joining", { event: event.substring(4), params});
+      const existingJoinIndex = this.joins.findIndex(j => j.event === event.substring(4));
+      if (existingJoinIndex === -1) {
+        this.joins.push({ event: event.substring(4), params });
+        console.log("Joining", { event: event.substring(4), params});
+      }
     }
     return this.rawSocket.emit(event, ...params);
   }
   
   disconnect() {
-    for (const j of this.joins) {
-      this.rawSocket.emit(`leave${j.event}`, ...j.params);
-    }
-    this.joins = [];
-    for (const c of this.callbacks) {
-      this.rawSocket.off(c.event, c.callback);
-    }
+    // Não desconecta o socket real, apenas limpa os callbacks locais
     this.callbacks = [];
+    this.joins = [];
   }
 }
 
@@ -85,6 +85,8 @@ const socketManager = {
   currentUserId: -1,
   currentSocket: null,
   socketReady: false,
+  reconnectAttempts: 0,
+  maxReconnectAttempts: 5,
 
   getSocket: function(companyId) {
     let userId = null;
@@ -108,6 +110,7 @@ const socketManager = {
         this.currentSocket = null;
         this.currentCompanyId = null;
         this.currentUserId = null;
+        this.reconnectAttempts = 0;
       }
 
       let token = JSON.parse(localStorage.getItem("token"));
@@ -115,7 +118,7 @@ const socketManager = {
         return new DummySocket();
       }
       
-      if ( isExpired(token) ) {
+      if (isExpired(token)) {
         console.warn("Expired token, waiting for refresh");
         setTimeout(() => {
           const currentToken = JSON.parse(localStorage.getItem("token"));
@@ -124,7 +127,7 @@ const socketManager = {
             localStorage.removeItem("companyId");
           }
           window.location.reload();
-        },1000);
+        }, 1000);
         return new DummySocket();
       }
 
@@ -133,62 +136,72 @@ const socketManager = {
       
       this.currentSocket = openSocket(process.env.REACT_APP_BACKEND_URL, {
         transports: ["websocket"],
-        pingTimeout: 18000,
-        pingInterval: 18000,
+        pingTimeout: 60000,
+        pingInterval: 25000,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
         query: { token },
       });
 
       this.currentSocket.io.on("reconnect_attempt", () => {
+        this.reconnectAttempts++;
         this.currentSocket.io.opts.query.r = 1;
         token = JSON.parse(localStorage.getItem("token"));
-        if ( isExpired(token) ) {
-          console.warn("Refreshing");
+        if (isExpired(token)) {
+          console.warn("Token expired during reconnect - refreshing");
           window.location.reload();
         } else {
-          console.warn("Using new token");
+          console.warn("Using new token for reconnection attempt", this.reconnectAttempts);
           this.currentSocket.io.opts.query.token = token;
         }
       });
       
       this.currentSocket.on("disconnect", (reason) => {
         console.warn(`socket disconnected because: ${reason}`);
-        if (reason.startsWith("io server disconnect")) {
-          console.warn("tryng to reconnect", this.currentSocket);
+        if (reason === "io server disconnect") {
+          console.warn("Server disconnected socket - attempting reconnect");
           token = JSON.parse(localStorage.getItem("token"));
           
-          if ( isExpired(token) ) {
-            console.warn("Expired token - refreshing");
+          if (isExpired(token)) {
+            console.warn("Token expired - refreshing page");
             window.location.reload();
             return;
           }
-          console.warn("Reconnecting using refreshed token");
-          this.currentSocket.io.opts.query.token = token;
-          this.currentSocket.io.opts.query.r = 1;
-          this.currentSocket.connect();
-        }        
+          
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            console.warn("Reconnecting with refreshed token");
+            this.currentSocket.io.opts.query.token = token;
+            this.currentSocket.io.opts.query.r = 1;
+            this.currentSocket.connect();
+          } else {
+            console.warn("Max reconnection attempts reached - reloading page");
+            window.location.reload();
+          }
+        }
       });
       
-      this.currentSocket.on("connect", (...params) => {
-        console.warn("socket connected", params);
-      })
+      this.currentSocket.on("connect", () => {
+        console.warn("Socket connected successfully");
+        this.reconnectAttempts = 0;
+      });
       
       this.currentSocket.onAny((event, ...args) => {
-        console.debug("Event: ", { socket: this.currentSocket, event, args });
+        console.debug("Socket Event: ", { event, args });
       });
       
       this.onReady(() => {
         this.socketReady = true;
       });
-
     }
     
     return new ManagedSocket(this);
   },
   
-  onReady: function( callbackReady ) {
+  onReady: function(callbackReady) {
     if (this.socketReady) {
       callbackReady();
-      return
+      return;
     }
     
     if (!this.currentSocket) {
@@ -200,10 +213,11 @@ const socketManager = {
     });
   },
   
-  onConnect: function( callbackReady ) { this.onReady( callbackReady ) },
-
+  onConnect: function(callbackReady) { 
+    this.onReady(callbackReady);
+  }
 };
 
-const SocketContext = createContext()
+const SocketContext = createContext();
 
 export { SocketContext, socketManager };

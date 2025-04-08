@@ -273,10 +273,13 @@ function Chat(props) {
     }
 
     return () => {
-      socket.disconnect();
+      socket.off(`company-${companyId}-chat-user-${user.id}`);
+      socket.off(`company-${companyId}-chat`);
+      if (currentChat?.id) {
+        socket.off(`company-${companyId}-chat-${currentChat.id}`);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChat, socketManager]);
+  }, [currentChat, chats, user, history, socketManager]);
 
   const selectChat = (chat) => {
     try {

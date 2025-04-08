@@ -88,7 +88,12 @@ const reducer = (state, action) => {
       }
     });
 
-    return [...newTickets];
+    return [...state];
+  }
+
+  if (action.type === "DELETE_TICKET") {
+    const ticketId = action.payload;
+    return state.filter(ticket => ticket.id !== ticketId);
   }
 
   if (action.type === "RESET_UNREAD") {
@@ -104,6 +109,10 @@ const reducer = (state, action) => {
 
   if (action.type === "UPDATE_TICKET") {
     const ticket = action.payload;
+
+    if (ticket.status === "closed") {
+      return state.filter(t => t.id !== ticket.id);
+    }
 
     const ticketIndex = state.findIndex((t) => t.id === ticket.id);
     if (ticketIndex !== -1) {
@@ -138,19 +147,11 @@ const reducer = (state, action) => {
     return [...state];
   }
 
-  if (action.type === "DELETE_TICKET") {
-    const ticketId = action.payload;
-    const ticketIndex = state.findIndex((t) => t.id === ticketId);
-    if (ticketIndex !== -1) {
-      state.splice(ticketIndex, 1);
-    }
-
-    return [...state];
-  }
-
   if (action.type === "RESET") {
     return [];
   }
+
+  return state;
 };
 
 const TicketsList = ({
@@ -193,14 +194,54 @@ const TicketsList = ({
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
 
-    const shouldUpdateTicket = (ticket) =>
-      (!ticket.userId || ticket.userId === user?.id || showAll) &&
-      (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
+    const shouldUpdateTicket = (ticket) => {
+      if (!ticket) {
+        console.warn("Ticket inválido recebido no shouldUpdateTicket");
+        return false;
+      }
 
-    const notBelongsToUserQueues = (ticket) =>
-      ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
+      if (ticket.status === "closed") {
+        return true;
+      }
+
+      if (user.profile !== "admin") {
+        const userQueueIds = user.queues.map(q => q.id);
+        if (!userQueueIds.includes(ticket.queueId)) {
+          return false;
+        }
+      }
+
+      if (ticket.queue?.id !== selectedQueueIds[0] && selectedQueueIds.length === 1) {
+        return false;
+      }
+
+      if (ticket.user?.id !== user?.id && selectedQueueIds.length > 1) {
+        return false;
+      }
+
+      if (selectedQueueIds.length > 0 && !ticket.tags?.some(tag => selectedQueueIds.includes(tag.id))) {
+        return false;
+      }
+
+      return true;
+    };
+
+    const handleUpdateTicket = (data) => {
+      dispatch({
+        type: "UPDATE_TICKET",
+        payload: data,
+      });
+    };
+
+    const handleDeleteTicket = (data) => {
+      dispatch({
+        type: "DELETE_TICKET",
+        payload: data.id,
+      });
+    };
 
     socket.on("connect", () => {
+      console.debug("Socket conectado, status:", status);
       if (status) {
         socket.emit("joinTickets", status);
       } else {
@@ -209,49 +250,95 @@ const TicketsList = ({
     });
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-      if (data.action === "updateUnread") {
-        dispatch({
-          type: "RESET_UNREAD",
-          payload: data.ticketId,
-        });
-      }
+      try {
+        console.debug("Evento de ticket recebido:", data);
 
-      if (data.action === "update" && shouldUpdateTicket(data.ticket)) {
-        dispatch({
-          type: "UPDATE_TICKET",
-          payload: data.ticket,
-        });
-      }
+        if (!data) {
+          console.warn("Dados do evento inválidos");
+          return;
+        }
 
-      if (data.action === "update" && notBelongsToUserQueues(data.ticket)) {
-        dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
-      }
+        if (data.action === "updateUnread") {
+          dispatch({
+            type: "RESET_UNREAD",
+            payload: data.ticketId,
+          });
+          return;
+        }
 
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_TICKET", payload: data.ticketId });
+        if (data.action === "update" && data.ticket?.status === "closed") {
+          console.debug("Removendo ticket fechado:", data.ticket.id);
+          dispatch({
+            type: "DELETE_TICKET",
+            payload: data.ticket.id
+          });
+          return;
+        }
+
+        if (data.action === "delete") {
+          console.debug("Removendo ticket por delete:", data.ticketId);
+          dispatch({
+            type: "DELETE_TICKET",
+            payload: data.ticketId
+          });
+          return;
+        }
+
+        if (data.action === "update" && data.ticket) {
+          const ticket = data.ticket;
+          
+          if (!ticket) {
+            console.warn("Ticket inválido no evento de atualização");
+            return;
+          }
+
+          if (shouldUpdateTicket(ticket)) {
+            const validTicket = {
+              ...ticket,
+              queue: ticket?.queue || null,
+              queueId: ticket?.queueId || null
+            };
+
+            console.debug("Atualizando ticket:", validTicket);
+            handleUpdateTicket(validTicket);
+          } else {
+            console.debug("Ticket não atende aos critérios de atualização");
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao processar evento de ticket:", err);
       }
     });
 
     socket.on(`company-${companyId}-appMessage`, (data) => {
-      if (data.action === "create" && shouldUpdateTicket(data.ticket)) {
-        dispatch({
-          type: "UPDATE_TICKET_UNREAD_MESSAGES",
-          payload: data.ticket,
-        });
-      }
-    });
+      try {
+        console.debug("Evento de mensagem recebido:", data);
+        
+        if (!data || !data.ticket) {
+          console.warn("Dados da mensagem inválidos");
+          return;
+        }
 
-    socket.on(`company-${companyId}-contact`, (data) => {
-      if (data.action === "update") {
-        dispatch({
-          type: "UPDATE_TICKET_CONTACT",
-          payload: data.contact,
-        });
+        if (data.action === "create" && shouldUpdateTicket(data.ticket)) {
+          const validTicket = {
+            ...data.ticket,
+            queue: data.ticket?.queue || null,
+            queueId: data.ticket?.queueId || null
+          };
+
+          console.debug("Atualizando ticket com nova mensagem:", validTicket);
+
+          handleUpdateTicket(validTicket);
+        }
+      } catch (err) {
+        console.error("Erro ao processar mensagem:", err);
       }
     });
 
     return () => {
-      socket.disconnect();
+      console.debug("Desconectando listeners de socket");
+      socket.off(`company-${companyId}-ticket`);
+      socket.off(`company-${companyId}-appMessage`);
     };
   }, [status, showAll, user, selectedQueueIds, socketManager]);
 

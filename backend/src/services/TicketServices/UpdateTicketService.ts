@@ -289,24 +289,32 @@ const UpdateTicketService = async ({
     await ticketTraking.save();
 
     if (ticket.status !== oldStatus || ticket.user?.id !== oldUserId) {
+      if (status === "closed") {
+        io.to(`company-${companyId}-${oldStatus}`)
+          .to(`queue-${ticket.queueId}-${oldStatus}`)
+          .emit(`company-${companyId}-ticket`, {
+            action: "delete",
+            ticketId: ticket.id
+          });
+      } else {
+        io.to(`company-${companyId}-${oldStatus}`)
+          .to(`queue-${ticket.queueId}-${oldStatus}`)
+          .emit(`company-${companyId}-ticket`, {
+            action: "delete",
+            ticketId: ticket.id
+          });
 
-      io.to(`company-${companyId}-${oldStatus}`)
-        .to(`queue-${ticket.queueId}-${oldStatus}`)
-        .emit(`company-${companyId}-ticket`, {
-          action: "delete",
-          ticketId: ticket.id
-        });
+        io.to(`company-${companyId}-${ticket.status}`)
+          .to(`company-${companyId}-notification`)
+          .to(`queue-${ticket.queueId}-${ticket.status}`)
+          .to(`queue-${ticket.queueId}-notification`)
+          .to(ticketId.toString())
+          .emit(`company-${companyId}-ticket`, {
+            action: "update",
+            ticket
+          });
+      }
     }
-
-    io.to(`company-${companyId}-${ticket.status}`)
-      .to(`company-${companyId}-notification`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-notification`)
-      .to(ticketId.toString())
-      .emit(`company-${companyId}-ticket`, {
-        action: "update",
-        ticket
-      });
 
     return { ticket, oldStatus, oldUserId };
   } catch (err) {

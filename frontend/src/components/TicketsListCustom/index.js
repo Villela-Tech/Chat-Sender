@@ -106,6 +106,10 @@ const reducer = (state, action) => {
   if (action.type === "UPDATE_TICKET") {
     const ticket = action.payload;
 
+    if (ticket.status === "closed") {
+      return state.filter(t => t.id !== ticket.id);
+    }
+
     const ticketIndex = state.findIndex((t) => t.id === ticket.id);
     if (ticketIndex !== -1) {
       state[ticketIndex] = ticket;
@@ -150,12 +154,7 @@ const reducer = (state, action) => {
 
   if (action.type === "DELETE_TICKET") {
     const ticketId = action.payload;
-    const ticketIndex = state.findIndex((t) => t.id === ticketId);
-    if (ticketIndex !== -1) {
-      state.splice(ticketIndex, 1);
-    }
-
-    return [...state];
+    return state.filter(ticket => ticket.id !== ticketId);
   }
 
   if (action.type === "RESET") {
@@ -251,12 +250,17 @@ const TicketsListCustom = (props) => {
     });
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-
       if (data.action === "updateUnread") {
         dispatch({
           type: "RESET_UNREAD",
           payload: data.ticketId,
         });
+      }
+
+      if (data.action === "update" && data.ticket?.status === "closed") {
+        console.debug("Removendo ticket fechado:", data.ticket.id);
+        dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
+        return;
       }
 
       if (data.action === "update" && shouldUpdateTicket(data.ticket) && data.ticket.status === status) {
