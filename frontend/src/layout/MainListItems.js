@@ -299,7 +299,6 @@ const MainListItems = (props) => {
               <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Atendimento")} </Typography>
             </ListSubheader>
             <>
-
               <ListItemLink
                 to="/tickets"
                 primary={i18n.t("mainDrawer.listItems.tickets")}
@@ -366,7 +365,7 @@ const MainListItems = (props) => {
 
       <Can
         role={user.profile}
-        perform={"drawer-admin-items:view"}
+        perform="drawer-admin-items:view"
         yes={() => (
           <>
             <ListSubheader
@@ -379,7 +378,6 @@ const MainListItems = (props) => {
               }}
               inset
               color="inherit">
-
               <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Gerência")} </Typography>
             </ListSubheader>
 
@@ -398,108 +396,62 @@ const MainListItems = (props) => {
           </>
         )}
       />
+
+      {showCampaigns && (
+        <Can
+          role={user.profile}
+          perform="campaigns:view"
+          yes={() => (
+            <>
+              <ListSubheader
+                hidden={collapsed}
+                style={{
+                  position: "relative",
+                  fontSize: "17px",
+                  textAlign: "left",
+                  paddingLeft: 20
+                }}
+                inset
+                color="inherit">
+                <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Campanhas")} </Typography>
+              </ListSubheader>
+
+              <ListItemLink
+                small
+                to="/campaigns"
+                primary={i18n.t("Listagem")}
+                icon={<ListIcon />}
+              />
+
+              <ListItemLink
+                small
+                to="/contact-lists"
+                primary={i18n.t("Listas de Contatos")}
+                icon={<PeopleIcon />}
+              />
+
+              <Can
+                role={user.profile}
+                perform="drawer-admin-items:view"
+                yes={() => (
+                  <ListItemLink
+                    small
+                    to="/campaigns-config"
+                    primary={i18n.t("Configurações")}
+                    icon={<ListIcon />}
+                  />
+                )}
+              />
+            </>
+          )}
+        />
+      )}
+
       <Can
         role={user.profile}
         perform="drawer-admin-items:view"
         yes={() => (
           <>
-
-            {showCampaigns && (
-              <>
-                <ListSubheader
-                  hidden={collapsed}
-                  style={{
-                    position: "relative",
-                    fontSize: "17px",
-                    textAlign: "left",
-                    paddingLeft: 20
-                  }}
-                  inset
-                  color="inherit">
-                  <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Campanhas")} </Typography>
-                </ListSubheader>
-
-                <ListItemLink
-                  small
-                  to="/campaigns"
-                  primary={i18n.t("Listagem")}
-                  icon={<ListIcon />}
-                />
-
-                <ListItemLink
-                  small
-                  to="/contact-lists"
-                  primary={i18n.t("Listas de Contatos")}
-                  icon={<PeopleIcon />}
-                />
-
-
-                <ListItemLink
-                  small
-                  to="/campaigns-config"
-                  primary={i18n.t("Configurações")}
-                  icon={<ListIcon />}
-                />
-
-
-                {/** 
-                <ListItem
-                  button
-                  onClick={() => setOpenCampaignSubmenu((prev) => !prev)}
-                >
-                  <ListItemIcon>
-                    <EventAvailableIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={i18n.t("mainDrawer.listItems.campaigns")}
-                  />
-                  {openCampaignSubmenu ? (
-                    <ExpandLessIcon />
-                  ) : (
-                    <ExpandMoreIcon />
-                  )}
-                </ListItem>
-                <Collapse
-                  style={{ paddingLeft: 15 }}
-                  in={openCampaignSubmenu}
-                  timeout="auto"
-                  unmountOnExit
-                >
-                  <List component="div" disablePadding>
-                    
-                    <ListItem onClick={() => history.push("/campaigns")} button>
-                      <ListItemIcon>
-                        <ListIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Listagem" />
-                    </ListItem>
-
-                    <ListItem
-                      onClick={() => history.push("/contact-lists")}
-                      button
-                    >
-                      <ListItemIcon>
-                        <PeopleIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Listas de Contatos" />
-                    </ListItem>
-
-                    <ListItem
-                      onClick={() => history.push("/campaigns-config")}
-                      button
-                    >
-                      <ListItemIcon>
-                        <SettingsOutlinedIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Configurações" />
-                    </ListItem>
-
-                  </List>
-                </Collapse>
-                */}
-              </>
-            )}
-
             <ListSubheader
               hidden={collapsed}
               style={{
