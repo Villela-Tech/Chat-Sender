@@ -1,6 +1,8 @@
 const rules = {
 	user: {
-		static: [],
+		static: [
+			"campaigns:view"
+		],
 	},
 
 	admin: {
@@ -14,7 +16,10 @@ const rules = {
 			"contacts-page:deleteContact",
 			"connections-page:actionButtons",
 			"connections-page:addConnection",
-			"connections-page:editOrDeleteConnection"
+			"connections-page:editOrDeleteConnection",
+			"campaigns:create",
+			"campaigns:edit",
+			"campaigns:delete"
 		],
 	},
 };
