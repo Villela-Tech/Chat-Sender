@@ -152,13 +152,7 @@ const CustomLink = ({ children, ...props }) => (
 const MarkdownWrapper = ({ children }) => {
 	const boldRegex = /\*(.*?)\*/g;
 	const tildaRegex = /~(.*?)~/g;
-
-	if (children && boldRegex.test(children)) {
-		children = children.replace(boldRegex, "**$1**");
-	}
-	if (children && tildaRegex.test(children)) {
-		children = children.replace(tildaRegex, "~~$1~~");
-	}
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 	const options = React.useMemo(() => {
 		const markdownOptions = {
@@ -180,7 +174,21 @@ const MarkdownWrapper = ({ children }) => {
 
 	if (!children) return null;
 
-	return <Markdown options={options}>{children}</Markdown>;
+	let processedText = children;
+
+	if (boldRegex.test(processedText)) {
+		processedText = processedText.replace(boldRegex, "**$1**");
+	}
+	if (tildaRegex.test(processedText)) {
+		processedText = processedText.replace(tildaRegex, "~~$1~~");
+	}
+	
+	// Converte URLs em links Markdown
+	if (urlRegex.test(processedText)) {
+		processedText = processedText.replace(urlRegex, (url) => `[${url}](${url})`);
+	}
+
+	return <Markdown options={options}>{processedText}</Markdown>;
 };
 
 export default MarkdownWrapper;
