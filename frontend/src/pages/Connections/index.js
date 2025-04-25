@@ -414,37 +414,42 @@ const Connections = () => {
 							variant="outlined"
 							color="primary"
 							onClick={() => handleStartWhatsAppSession(whatsApp.id)}
+							className={classes.sessionButton}
+							style={{ marginRight: '8px' }}
 						>
-							{i18n.t("connections.buttons.tryAgain")}
-						</Button>{" "}
+							TENTAR NOVAMENTE
+						</Button>
 						<Button
 							size="small"
-							variant="outlined"
-							color="secondary"
-							onClick={() => handleRequestNewQrCode(whatsApp.id)}
+							variant="contained"
+							color="primary"
+							onClick={() => handleOpenQrModal(whatsApp)}
+							style={{ backgroundColor: '#00796b', color: 'white' }}
 						>
-							{i18n.t("connections.buttons.newQr")}
+							QR CODE
 						</Button>
 					</>
 				)}
-				{(whatsApp.status === "CONNECTED" ||
-					whatsApp.status === "PAIRING" ||
-					whatsApp.status === "TIMEOUT") && (
-						<>
-							<Button
-								size="small"
-								variant="outlined"
-								color="secondary"
-								onClick={() => {
-									handleOpenConfirmationModal("disconnect", whatsApp.id);
-								}}
-							>
-								{i18n.t("connections.buttons.disconnect")}
-							</Button>
-
-							{renderImportButton(whatsApp)}
-						</>
-					)}
+				{whatsApp.status === "qrcode" ? (
+					<Button
+						size="small"
+						variant="contained"
+						color="primary"
+						onClick={() => handleOpenQrModal(whatsApp)}
+						style={{ backgroundColor: '#00796b', color: 'white' }}
+					>
+						QR CODE
+					</Button>
+				) : whatsApp.status === "CONNECTED" ? (
+					<Button
+						size="small"
+						variant="outlined"
+						onClick={() => handleOpenConfirmationModal("disconnect", whatsApp.id)}
+						className={classes.disconnectButton}
+					>
+						DESCONECTAR
+					</Button>
+				) : null}
 				{whatsApp.status === "OPENING" && (
 					<Button size="small" variant="outlined" disabled color="default">
 						{i18n.t("connections.buttons.connecting")}
@@ -655,18 +660,30 @@ const Connections = () => {
 															color="primary"
 															onClick={() => handleStartWhatsAppSession(whatsApp.id)}
 															className={classes.sessionButton}
+															style={{ marginRight: '8px' }}
 														>
 															TENTAR NOVAMENTE
 														</Button>
 														<Button
 															size="small"
-															variant="outlined"
-															onClick={() => handleRequestNewQrCode(whatsApp.id)}
-															className={classes.disconnectButton}
+															variant="contained"
+															color="primary"
+															onClick={() => handleOpenQrModal(whatsApp)}
+															style={{ backgroundColor: '#00796b', color: 'white' }}
 														>
-															NOVO QR CODE
+															QR CODE
 														</Button>
 													</>
+												) : whatsApp.status === "qrcode" ? (
+													<Button
+														size="small"
+														variant="contained"
+														color="primary"
+														onClick={() => handleOpenQrModal(whatsApp)}
+														style={{ backgroundColor: '#00796b', color: 'white' }}
+													>
+														QR CODE
+													</Button>
 												) : whatsApp.status === "CONNECTED" ? (
 													<Button
 														size="small"
