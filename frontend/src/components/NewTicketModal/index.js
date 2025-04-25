@@ -185,7 +185,10 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
     if (newValue?.number) {
       setSelectedContact(newValue);
     } else if (newValue?.name) {
-      setNewContact({ name: newValue.name });
+      setNewContact({ 
+        name: "",
+        number: newValue.name
+       });
       setContactModalOpen(true);
     }
   };
