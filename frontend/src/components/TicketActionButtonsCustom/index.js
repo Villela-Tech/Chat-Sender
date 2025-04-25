@@ -2,8 +2,8 @@ import React, { useContext, useState } from "react";
 import { useHistory } from "react-router-dom";
 
 import { makeStyles, createTheme, ThemeProvider } from "@material-ui/core/styles";
-import { IconButton } from "@material-ui/core";
-import { MoreVert, Replay } from "@material-ui/icons";
+import { IconButton, Tooltip } from "@material-ui/core";
+import { MoreVert, Replay, Phone } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -14,9 +14,8 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
-import Tooltip from '@material-ui/core/Tooltip';
 import { green } from '@material-ui/core/colors';
-import { Phone } from "@material-ui/icons";
+import { SocketContext } from "../../context/Socket/SocketContext";
 
 
 const useStyles = makeStyles(theme => ({
@@ -39,6 +38,7 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 	const { setCurrentTicket } = useContext(TicketsContext);
+	const socketManager = useContext(SocketContext);
 
 	const customTheme = createTheme({
 		palette: {
@@ -57,7 +57,7 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 	const handleUpdateTicketStatus = async (e, status, userId) => {
 		setLoading(true);
 		try {
-			await api.put(`/tickets/${ticket.id}`, {
+			const { data: updatedTicket } = await api.put(`/tickets/${ticket.id}`, {
 				status: status,
 				userId: userId || null,
 				useIntegration: status === "closed" ? false : ticket.useIntegration,
@@ -67,10 +67,27 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 
 			setLoading(false);
 			if (status === "open") {
-				setCurrentTicket({ ...ticket, code: "#open" });
+				setCurrentTicket({ ...updatedTicket, code: "#open" });
 			} else {
-				setCurrentTicket({ id: null, code: null })
-				history.push("/tickets");
+				setCurrentTicket({ id: null, code: null });
+				// Força a atualização da lista antes de redirecionar
+				const socket = socketManager.getSocket(localStorage.getItem("companyId"));
+				socket.emit("ticket:update", {
+					ticketId: ticket.id,
+					ticket: updatedTicket,
+					action: "update"
+				});
+
+				if (status === "closed") {
+					socket.emit(`company-${localStorage.getItem("companyId")}-ticket`, {
+						action: "delete",
+						ticketId: ticket.id
+					});
+				}
+				
+				setTimeout(() => {
+					history.push("/tickets");
+				}, 100);
 			}
 		} catch (err) {
 			setLoading(false);
@@ -123,23 +140,6 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 							</IconButton>
 						</Tooltip>
 					</ThemeProvider>
-					{/* <ButtonWithSpinner
-						loading={loading}
-						startIcon={<Replay />}
-						size="small"
-						onClick={e => handleUpdateTicketStatus(e, "pending", null)}
-					>
-						{i18n.t("messagesList.header.buttons.return")}
-					</ButtonWithSpinner>
-					<ButtonWithSpinner
-						loading={loading}
-						size="small"
-						variant="contained"
-						color="primary"
-						onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
-					>
-						{i18n.t("messagesList.header.buttons.resolve")}
-					</ButtonWithSpinner> */}
 					<IconButton onClick={handleOpenTicketOptionsMenu}>
 						<MoreVert />
 					</IconButton>

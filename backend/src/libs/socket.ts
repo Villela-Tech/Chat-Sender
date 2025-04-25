@@ -162,6 +162,16 @@ export const initIO = (httpServer: Server): SocketIO => {
       }
     });
     
+    socket.on("ticket:update", async (data) => {
+      logger.info("Received ticket:update event");
+      if (data.ticket && data.action === "update") {
+        io.emit(`ticket:update:${data.ticketId}`, {
+          action: "update",
+          ticket: data.ticket
+        });
+      }
+    });
+
     socket.emit("ready");
   });
   return io;

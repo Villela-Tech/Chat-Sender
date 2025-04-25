@@ -108,8 +108,12 @@ const reducer = (state, action) => {
 
     const ticketIndex = state.findIndex((t) => t.id === ticket.id);
     if (ticketIndex !== -1) {
-      state[ticketIndex] = ticket;
-    } else {
+      if (ticket.status === "closed") {
+        state.splice(ticketIndex, 1);
+      } else {
+        state[ticketIndex] = ticket;
+      }
+    } else if (ticket.status !== "closed") {
       state.unshift(ticket);
     }
 
@@ -251,7 +255,6 @@ const TicketsListCustom = (props) => {
     });
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-
       if (data.action === "updateUnread") {
         dispatch({
           type: "RESET_UNREAD",
@@ -259,19 +262,24 @@ const TicketsListCustom = (props) => {
         });
       }
 
-      if (data.action === "update" && shouldUpdateTicket(data.ticket) && data.ticket.status === status) {
+      if (data.action === "update") {
         dispatch({
           type: "UPDATE_TICKET",
           payload: data.ticket,
         });
       }
 
-      if (data.action === "update" && notBelongsToUserQueues(data.ticket)) {
-        dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
-      }
-
       if (data.action === "delete") {
         dispatch({ type: "DELETE_TICKET", payload: data.ticketId });
+      }
+    });
+
+    socket.on("ticket:update", (data) => {
+      if (data.action === "update") {
+        dispatch({
+          type: "UPDATE_TICKET",
+          payload: data.ticket,
+        });
       }
     });
 

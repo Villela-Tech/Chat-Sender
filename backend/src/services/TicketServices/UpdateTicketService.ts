@@ -289,7 +289,6 @@ const UpdateTicketService = async ({
     await ticketTraking.save();
 
     if (ticket.status !== oldStatus || ticket.user?.id !== oldUserId) {
-
       io.to(`company-${companyId}-${oldStatus}`)
         .to(`queue-${ticket.queueId}-${oldStatus}`)
         .emit(`company-${companyId}-ticket`, {
@@ -307,6 +306,11 @@ const UpdateTicketService = async ({
         action: "update",
         ticket
       });
+
+    io.emit(`ticket:update:${ticket.id}`, {
+      action: "update",
+      ticket
+    });
 
     return { ticket, oldStatus, oldUserId };
   } catch (err) {
