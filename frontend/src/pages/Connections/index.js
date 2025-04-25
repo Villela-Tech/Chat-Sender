@@ -2,6 +2,8 @@ import React, { useState, useCallback, useContext, useEffect } from "react";
 import { toast } from "react-toastify";
 import { add, format, parseISO } from "date-fns";
 import { useHistory } from "react-router-dom";
+import moment from "moment";
+import clsx from "clsx";
 
 import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
@@ -29,6 +31,7 @@ import {
 	SignalCellular4Bar,
 	CropFree,
 	DeleteOutline,
+	WhatsApp,
 } from "@material-ui/icons";
 
 import MainContainer from "../../components/MainContainer";
@@ -48,7 +51,6 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../../components/Can";
-import { WhatsApp } from "@material-ui/icons";
 
 const useStyles = makeStyles(theme => ({
 	mainPaper: {
@@ -74,6 +76,55 @@ const useStyles = makeStyles(theme => ({
 	},
 	buttonProgress: {
 		color: green[500],
+	},
+	sessionButton: {
+		fontSize: "0.75rem",
+		padding: "4px 8px",
+		marginRight: "8px",
+	},
+	disconnectButton: {
+		fontSize: "0.75rem",
+		padding: "4px 8px",
+		backgroundColor: "#f50057",
+		color: "white",
+		"&:hover": {
+			backgroundColor: "#dc004e",
+		},
+	},
+	whatsappIcon: {
+		color: "#25D366",
+	},
+	countryCode: {
+		marginRight: "4px",
+		color: "#666",
+		fontSize: "0.875rem",
+	},
+	filterContainer: {
+		padding: theme.spacing(2),
+		display: 'flex',
+		gap: theme.spacing(1),
+		alignItems: 'center',
+	},
+	filterButton: {
+		borderRadius: 4,
+		'&.active': {
+			backgroundColor: green[600],
+			color: 'white',
+			'&:hover': {
+				backgroundColor: green[700],
+			},
+		},
+	},
+	actionButtons: {
+		display: 'flex',
+		gap: '8px',
+	},
+	actionButton: {
+		padding: '6px',
+		'& svg': {
+			fontSize: '20px',
+			color: '#666',
+		},
 	},
 }));
 
@@ -101,6 +152,24 @@ const CustomToolTip = ({ title, content, children }) => {
 	);
 };
 
+const formatPhoneNumber = (number) => {
+	if (!number) return '';
+	// Remove todos os caracteres não numéricos
+	const cleaned = number.replace(/\D/g, '');
+	// Remove o código do país (55) se existir
+	const numberWithoutCountry = cleaned.startsWith('55') ? cleaned.slice(2) : cleaned;
+	
+	// Pega o DDD
+	const ddd = numberWithoutCountry.slice(0, 2);
+	// Pega o restante do número
+	const restNumber = numberWithoutCountry.slice(2);
+	// Separa em duas partes: antes do hífen (todos exceto os 4 últimos) e depois do hífen (4 últimos)
+	const lastFour = restNumber.slice(-4);
+	const firstPart = restNumber.slice(0, restNumber.length - 4);
+	
+	return `🇧🇷 (${ddd}) ${firstPart}${firstPart ? '-' : ''}${lastFour}`;
+};
+
 const Connections = () => {
 	const classes = useStyles();
 	const history = useHistory();
@@ -122,8 +191,9 @@ const Connections = () => {
 	const [confirmModalInfo, setConfirmModalInfo] = useState(
 		confirmationModalInitialState
 	);
+	const [statusFilter, setStatusFilter] = useState('all');
 
-  const socketManager = useContext(SocketContext);
+	const socketManager = useContext(SocketContext);
 
 	useEffect(() => {
 		const companyId = localStorage.getItem("companyId");
@@ -164,7 +234,6 @@ const Connections = () => {
 		window.open(url, '_blank', 'noopener,noreferrer');
 	};
 
-	  
 	const handleOpenWhatsAppModal = () => {
 		setSelectedWhatsApp(null);
 		setWhatsAppModalOpen(true);
@@ -424,6 +493,16 @@ const Connections = () => {
 		);
 	};
 
+	const filteredWhatsApps = whatsApps?.filter(whatsApp => {
+		if (statusFilter === 'connected') {
+			return whatsApp.status === 'CONNECTED';
+		}
+		if (statusFilter === 'disconnected') {
+			return whatsApp.status === 'DISCONNECTED' || whatsApp.status === 'qrcode' || whatsApp.status === 'TIMEOUT' || whatsApp.status === 'PAIRING';
+		}
+		return true;
+	});
+
 	return (
 		<MainContainer>
 			<ConfirmationModal
@@ -465,7 +544,6 @@ const Connections = () => {
 						variant="contained"
 						color="primary"
 						onClick={() => openInNewTab(`https://wa.me/${process.env.REACT_APP_NUMBER_SUPPORT}`)}
-						
 					>
 						<WhatsApp style={{ marginRight: "5px"}} />
 						<span>{i18n.t("connections.buttons.support")}</span>
@@ -498,49 +576,47 @@ const Connections = () => {
 											/>
 										</Typography>
 									</>
-
-
 								}
-
 							</CardContent>
 						</Card>
 					</div>
 				</>
 			) : null}
 			<Paper className={classes.mainPaper} variant="outlined">
+				<div className={classes.filterContainer}>
+					<Button
+						variant="outlined"
+						className={clsx(classes.filterButton, { active: statusFilter === 'all' })}
+						onClick={() => setStatusFilter('all')}
+					>
+						Todas
+					</Button>
+					<Button
+						variant="outlined"
+						className={clsx(classes.filterButton, { active: statusFilter === 'connected' })}
+						onClick={() => setStatusFilter('connected')}
+					>
+						Conectadas
+					</Button>
+					<Button
+						variant="outlined"
+						className={clsx(classes.filterButton, { active: statusFilter === 'disconnected' })}
+						onClick={() => setStatusFilter('disconnected')}
+					>
+						Desconectadas
+					</Button>
+				</div>
+
 				<Table size="small">
 					<TableHead>
 						<TableRow>
-							<TableCell align="center">
-								{i18n.t("connections.table.name")}
-							</TableCell>
-							<TableCell align="center">
-								{i18n.t("connections.table.status")}
-							</TableCell>
-							<Can
-								role={user.profile}
-								perform="connections-page:actionButtons"
-								yes={() => (
-									<TableCell align="center">
-										{i18n.t("connections.table.session")}
-									</TableCell>
-								)}
-							/>
-							<TableCell align="center">
-								{i18n.t("connections.table.lastUpdate")}
-							</TableCell>
-							<TableCell align="center">
-								{i18n.t("connections.table.default")}
-							</TableCell>
-							<Can
-								role={user.profile}
-								perform="connections-page:editOrDeleteConnection"
-								yes={() => (
-									<TableCell align="center">
-										{i18n.t("connections.table.actions")}
-									</TableCell>
-								)}
-							/>
+							<TableCell align="center">{i18n.t("connections.table.name")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.status")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.number")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.session")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.lastUpdate")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.default")}</TableCell>
+							<TableCell align="center">{i18n.t("connections.table.actions")}</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
@@ -548,55 +624,87 @@ const Connections = () => {
 							<TableRowSkeleton />
 						) : (
 							<>
-								{whatsApps?.length > 0 &&
-									whatsApps.map(whatsApp => (
+								{filteredWhatsApps?.length > 0 &&
+									filteredWhatsApps.map(whatsApp => (
 										<TableRow key={whatsApp.id}>
-											<TableCell align="center">{whatsApp.name}</TableCell>
-											<TableCell align="center">
-												{renderStatusToolTips(whatsApp)}
+											<TableCell>
+												{whatsApp.name}
 											</TableCell>
-											<Can
-												role={user.profile}
-												perform="connections-page:actionButtons"
-												yes={() => (
-													<TableCell align="center">
-														{renderActionButtons(whatsApp)}
-													</TableCell>
+											<TableCell align="center">
+												{whatsApp.status === "CONNECTED" ? (
+													<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+														<SignalCellular4Bar style={{ color: green[500] }} />
+													</div>
+												) : (
+													<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+														<SignalCellularConnectedNoInternet0Bar color="secondary" />
+													</div>
 												)}
-											/>
+											</TableCell>
+											<TableCell>
+												<div style={{ display: 'flex', alignItems: 'center' }}>
+													{formatPhoneNumber(whatsApp.number)}
+												</div>
+											</TableCell>
+											<TableCell align="center">
+												{whatsApp.status === "DISCONNECTED" ? (
+													<>
+														<Button
+															size="small"
+															variant="outlined"
+															color="primary"
+															onClick={() => handleStartWhatsAppSession(whatsApp.id)}
+															className={classes.sessionButton}
+														>
+															TENTAR NOVAMENTE
+														</Button>
+														<Button
+															size="small"
+															variant="outlined"
+															onClick={() => handleRequestNewQrCode(whatsApp.id)}
+															className={classes.disconnectButton}
+														>
+															NOVO QR CODE
+														</Button>
+													</>
+												) : whatsApp.status === "CONNECTED" ? (
+													<Button
+														size="small"
+														variant="outlined"
+														onClick={() => handleOpenConfirmationModal("disconnect", whatsApp.id)}
+														className={classes.disconnectButton}
+													>
+														DESCONECTAR
+													</Button>
+												) : null}
+											</TableCell>
 											<TableCell align="center">
 												{format(parseISO(whatsApp.updatedAt), "dd/MM/yy HH:mm")}
 											</TableCell>
 											<TableCell align="center">
 												{whatsApp.isDefault && (
-													<div className={classes.customTableCell}>
-														<CheckCircle style={{ color: green[500] }} />
-													</div>
+													<CheckCircle style={{ color: green[500] }} />
 												)}
 											</TableCell>
-											<Can
-												role={user.profile}
-												perform="connections-page:editOrDeleteConnection"
-												yes={() => (
-													<TableCell align="center">
-														<IconButton
-															size="small"
-															onClick={() => handleEditWhatsApp(whatsApp)}
-														>
-															<Edit />
-														</IconButton>
+											<TableCell>
+												<div className={classes.actionButtons}>
+													<IconButton
+														size="small"
+														onClick={() => handleEditWhatsApp(whatsApp)}
+														className={classes.actionButton}
+													>
+														<Edit />
+													</IconButton>
 
-														<IconButton
-															size="small"
-															onClick={e => {
-																handleOpenConfirmationModal("delete", whatsApp.id);
-															}}
-														>
-															<DeleteOutline />
-														</IconButton>
-													</TableCell>
-												)}
-											/>
+													<IconButton
+														size="small"
+														onClick={() => handleOpenConfirmationModal("delete", whatsApp.id)}
+														className={classes.actionButton}
+													>
+														<DeleteOutline />
+													</IconButton>
+												</div>
+											</TableCell>
 										</TableRow>
 									))}
 							</>

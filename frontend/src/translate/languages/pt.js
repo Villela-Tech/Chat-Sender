@@ -127,6 +127,7 @@ const messages = {
           default: "Padrão",
           actions: "Ações",
           session: "Sessão",
+          number: "Número",
         },
       },
       whatsappModal: {
