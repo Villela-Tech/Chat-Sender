@@ -76,20 +76,16 @@ const useStyles = makeStyles((theme) => ({
 const reducer = (state, action) => {
   if (action.type === "LOAD_TICKETS") {
     const newTickets = action.payload;
+    const newState = [];
 
     newTickets.forEach((ticket) => {
-      const ticketIndex = state.findIndex((t) => t.id === ticket.id);
-      if (ticketIndex !== -1) {
-        state[ticketIndex] = ticket;
-        if (ticket.unreadMessages > 0) {
-          state.unshift(state.splice(ticketIndex, 1)[0]);
-        }
-      } else {
-        state.push(ticket);
+      const exists = newState.findIndex((t) => t.id === ticket.id) !== -1;
+      if (!exists) {
+        newState.push(ticket);
       }
     });
 
-    return [...state];
+    return newState;
   }
 
   if (action.type === "RESET_UNREAD") {
@@ -105,15 +101,13 @@ const reducer = (state, action) => {
 
   if (action.type === "UPDATE_TICKET") {
     const ticket = action.payload;
-
     const ticketIndex = state.findIndex((t) => t.id === ticket.id);
+    
     if (ticketIndex !== -1) {
-      if (ticket.status === "closed") {
-        state.splice(ticketIndex, 1);
-      } else {
-        state[ticketIndex] = ticket;
-      }
-    } else if (ticket.status !== "closed") {
+      state.splice(ticketIndex, 1);
+    }
+    
+    if (ticket.status === action.currentStatus) {
       state.unshift(ticket);
     }
 
@@ -165,6 +159,8 @@ const reducer = (state, action) => {
   if (action.type === "RESET") {
     return [];
   }
+
+  return state;
 };
 
 const TicketsListCustom = (props) => {
@@ -255,17 +251,11 @@ const TicketsListCustom = (props) => {
     });
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-      if (data.action === "updateUnread") {
-        dispatch({
-          type: "RESET_UNREAD",
-          payload: data.ticketId,
-        });
-      }
-
       if (data.action === "update") {
         dispatch({
           type: "UPDATE_TICKET",
           payload: data.ticket,
+          currentStatus: status
         });
       }
 
@@ -279,6 +269,7 @@ const TicketsListCustom = (props) => {
         dispatch({
           type: "UPDATE_TICKET",
           payload: data.ticket,
+          currentStatus: status
         });
       }
     });

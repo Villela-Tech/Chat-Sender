@@ -190,7 +190,13 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
   }
 }));
-{/*PLW DESIGN INSERIDO O dentro do const handleChangeTab*/ }
+
+const TICKET_STATUS = {
+  OPEN: "open",
+  CLOSED: "closed",
+  PENDING: "pending"
+};
+
 const TicketListItemCustom = ({ ticket }) => {
   const classes = useStyles();
   const history = useHistory();
@@ -200,6 +206,7 @@ const TicketListItemCustom = ({ ticket }) => {
   const [ticketQueueColor, setTicketQueueColor] = useState(null);
   const [tag, setTag] = useState([]);
   const [whatsAppName, setWhatsAppName] = useState(null);
+  const [mounted, setMounted] = useState(true);
 
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
@@ -210,7 +217,6 @@ const TicketListItemCustom = ({ ticket }) => {
   const [transferTicketModalOpen, setTransferTicketModalOpen] = useState(false);
 
   const presenceMessage = { composing: "Digitando...", recording: "Gravando..." };
-
 
   useEffect(() => {
     if (ticket.userId && ticket.user) {
@@ -226,18 +232,19 @@ const TicketListItemCustom = ({ ticket }) => {
     setTag(ticket?.tags);
 
     return () => {
+      setMounted(false);
       isMounted.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
   const handleCloseTicket = async (id) => {
+    if (!mounted) return;
     setTag(ticket?.tags);
     setLoading(true);
     try {
       await api.put(`/tickets/${id}`, {
-        status: "closed",
+        status: TICKET_STATUS.CLOSED,
         userId: user?.id,
         queueId: ticket?.queue?.id,
         useIntegration: false,
@@ -255,10 +262,11 @@ const TicketListItemCustom = ({ ticket }) => {
   };
 
   const handleReopenTicket = async (id) => {
+    if (!mounted) return;
     setLoading(true);
     try {
       await api.put(`/tickets/${id}`, {
-        status: "open",
+        status: TICKET_STATUS.OPEN,
         userId: user?.id,
         queueId: ticket?.queue?.id
       });
@@ -273,10 +281,11 @@ const TicketListItemCustom = ({ ticket }) => {
   };
 
   const handleAcepptTicket = async (id) => {
+    if (!mounted) return;
     setLoading(true);
     try {
       await api.put(`/tickets/${id}`, {
-        status: "open",
+        status: TICKET_STATUS.OPEN,
         userId: user?.id,
       });
 
@@ -327,7 +336,6 @@ const TicketListItemCustom = ({ ticket }) => {
 
     }
   };
-  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
 
   const handleSelectTicket = (ticket) => {
     const code = uuidv4();
@@ -398,12 +406,12 @@ const TicketListItemCustom = ({ ticket }) => {
 
       <ListItem dense button
         onClick={(e) => {
-          if (ticket.status === "pending") return;
+          if (ticket.status === TICKET_STATUS.PENDING) return;
           handleSelectTicket(ticket);
         }}
         selected={ticketId && +ticketId === ticket.id}
         className={clsx(classes.ticket, {
-          [classes.pendingTicket]: ticket.status === "pending",
+          [classes.pendingTicket]: ticket.status === TICKET_STATUS.PENDING,
         })}
       >
         <Tooltip arrow placement="right" title={ticket.queue?.name?.toUpperCase() || "SEM FILA"} >
@@ -533,7 +541,7 @@ const TicketListItemCustom = ({ ticket }) => {
 
           <Box sx={{ display: 'flex' }}>
 
-            {ticket.status === "pending" && (
+            {ticket.status === TICKET_STATUS.PENDING && (
               <Tooltip arrow title="Aceitar ticket">
                 <IconButton style={{ color: "#008000" }} onClick={e => handleAcepptTicket(ticket.id)} size="small">
                   <CheckIcon />
@@ -541,14 +549,8 @@ const TicketListItemCustom = ({ ticket }) => {
               </Tooltip>
             )}
 
-            {(ticket.status === "open") && (
+            {ticket.status === TICKET_STATUS.OPEN && (
               <>
-                {/* <Tooltip arrow title="Resolver ticket">
-                  <IconButton onClick={e => handleCloseTicket(ticket.id)} style={{ color: "#008000" }} color="primary" size="small">
-                    <CheckIcon />
-                  </IconButton>
-                </Tooltip> */}
-
                 <Tooltip arrow title="Transferir ticket">
                   <IconButton onClick={handleOpenTransferModal} style={{ color: "#10175b" }} size="small">
                     <SyncAltIcon />
@@ -557,7 +559,7 @@ const TicketListItemCustom = ({ ticket }) => {
               </>
             )}
 
-            {(ticket.status === "closed") && (
+            {ticket.status === TICKET_STATUS.CLOSED && (
               <Tooltip arrow title="Reabrir ticket">
                 <IconButton style={{ color: "#008000" }} onClick={e => handleReopenTicket(ticket.id)} size="small">
                   <ReplayIcon />
@@ -565,7 +567,7 @@ const TicketListItemCustom = ({ ticket }) => {
               </Tooltip>
             )}
 
-            {(ticket.status !== "closed") && (
+            {ticket.status !== TICKET_STATUS.CLOSED && (
               <Tooltip arrow title="Finalizar ticket">
                 <IconButton style={{ color: "#f50057" }} onClick={e => handleCloseTicket(ticket.id)} size="small">
                   <HighlightOffIcon />
