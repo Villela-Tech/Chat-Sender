@@ -1,53 +1,22 @@
 # Sistema Sender
 > Sistema Completo de Atendimento Multicanal via WhatsApp
 
-## 📑 ÍNDICE GERAL
+# 📑 ÍNDICE GERAL
 
-### 📚 1. DOCUMENTAÇÃO GERAL
+## 📚 1. DOCUMENTAÇÃO GERAL
 
-#### 🎯 **Visão Geral do Projeto**
-- Objetivos
-- Público-alvo
-- Funcionalidades principais
-- Arquitetura do sistema
-- Tecnologias utilizadas
+* 🎯 **Visão Geral do Projeto**
+   * Objetivos
+   * Público-alvo
+   * Funcionalidades principais
+   * Arquitetura do sistema
+   * Tecnologias utilizadas
 
-#### 🚀 **Atualizações e Versões**
-- Histórico de versões
-- Changelog
-- Roadmap
-- Correções e melhorias
-
-### 💻 2. DOCUMENTAÇÃO TÉCNICA
-
-#### 🔧 **Arquitetura**
-- Frontend (React/TypeScript)
-  - Estrutura de pastas
-  - Componentes principais
-  - Gerenciamento de estado
-  - Rotas e navegação
-- Backend (Node.js)
-  - Estrutura do projeto
-  - APIs e endpoints
-  - Banco de dados
-  - Serviços
-- Integrações
-  - WhatsApp API
-  - Webhooks
-  - Serviços externos
-
-#### 🛠️ **Desenvolvimento**
-- Ambiente de desenvolvimento
-  - Requisitos
-  - Configuração
-  - Variáveis de ambiente
-- Padrões de código
-  - Convenções
-  - ESLint/Prettier
-  - Git workflow
-- Testes
-  - Unitários
-  - Integração
+* 🚀 **Atualizações e Versões**
+   * Histórico de versões
+   * Changelog
+   * Roadmap
+   * Correções e melhorias
 
 ## 💻 2. DOCUMENTAÇÃO TÉCNICA
 
@@ -501,3 +470,397 @@ cd frontend
 npm install
 npm start
 ```
+### Padrões de Código
+
+#### ESLint
+```json
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "no-console": "warn",
+    "no-unused-vars": "error"
+  }
+}
+```
+
+#### Git Workflow
+1. **Branches**
+   * `main`: Produção
+   * `develop`: Desenvolvimento
+   * `feature/*`: Novas funcionalidades
+   * `hotfix/*`: Correções urgentes
+
+2. **Commits**
+   * `feat`: Nova funcionalidade
+   * `fix`: Correção de bug
+   * `docs`: Documentação
+   * `style`: Formatação
+   * `refactor`: Refatoração
+   * `test`: Testes
+
+# 💼 PROCESSOS OPERACIONAIS
+
+## 📱 Gestão de Atendimento
+
+### Fluxo de Atendimento
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant S as Sistema
+    participant A as Atendente
+    
+    C->>S: Envia mensagem
+    S->>S: Verifica ticket existente
+    S->>S: Aplica regras de distribuição
+    S->>A: Notifica novo atendimento
+    A->>S: Aceita atendimento
+    A->>C: Inicia conversa
+    C->>A: Interage
+    A->>C: Responde
+    A->>S: Finaliza atendimento
+    S->>C: Envia pesquisa satisfação
+```
+
+### Estados do Ticket
+
+1. **Novo**
+   * Mensagem recebida
+   * Aguardando atribuição
+   * Prioridade definida
+
+2. **Em Atendimento**
+   * Atendente designado
+   * Conversa em andamento
+   * Tempo de resposta monitorado
+
+3. **Aguardando Cliente**
+   * Resposta enviada
+   * Timer de espera ativo
+   * Notificações configuradas
+
+4. **Resolvido**
+   * Solicitação atendida
+   * Feedback solicitado
+   * Histórico registrado
+
+### Priorização de Atendimento
+
+| Nível | Tempo Máximo | Condições |
+|-------|--------------|-----------|
+| P1    | 5 minutos   | - Cliente VIP<br>- Reclamação<br>- Palavra-chave urgente |
+| P2    | 15 minutos  | - Cliente regular<br>- Dúvida produto<br>- Suporte técnico |
+| P3    | 30 minutos  | - Informações gerais<br>- Consultas<br>- Feedback |
+| P4    | 60 minutos  | - Marketing<br>- Sugestões<br>- Outros |
+
+## 🤖 Automações
+
+### Chatbot
+
+#### Fluxos Automáticos
+```mermaid
+graph TD
+    A[Mensagem Recebida] --> B{Horário Comercial?}
+    B -->|Sim| C{Atendentes Disponíveis?}
+    B -->|Não| D[Resposta Automática]
+    C -->|Sim| E[Direciona Atendente]
+    C -->|Não| F[Fila de Espera]
+    D --> G[Registra Contato]
+    E --> H[Inicia Atendimento]
+    F --> I[Notifica Supervisão]
+```
+
+#### Respostas Automáticas
+
+* **Boas-vindas**
+```
+Olá! Bem-vindo ao Sistema Sender.
+Como posso ajudar você hoje?
+
+1️⃣ Suporte Técnico
+2️⃣ Vendas
+3️⃣ Financeiro
+4️⃣ Outros Assuntos
+```
+
+* **Fora do Horário**
+```
+Olá! Nosso horário de atendimento é:
+Segunda a Sexta: 08h às 18h
+Sábado: 09h às 13h
+
+🔔 Deixe sua mensagem e retornaremos assim que possível!
+```
+
+### Campanhas
+
+#### Tipos de Campanha
+
+1. **Marketing**
+   * Promoções
+   * Novidades
+   * Eventos
+
+2. **Relacionamento**
+   * Aniversário
+   * Pós-venda
+   * Pesquisa satisfação
+
+3. **Informativo**
+   * Avisos
+   * Atualizações
+   * Comunicados
+
+#### Configuração de Disparo
+
+* **Agendamento**
+  * Data/hora específica
+  * Recorrência
+  * Fuso horário
+
+* **Segmentação**
+  * Grupos
+  * Tags
+  * Histórico
+
+* **Limites**
+  * Taxa de envio
+  * Intervalo entre mensagens
+  * Quantidade diária
+
+## 📊 Métricas e KPIs
+
+### Atendimento
+
+#### Tempo Médio
+```mermaid
+pie title "Distribuição de Tempo de Atendimento"
+    "< 5 min" : 45
+    "5-15 min" : 30
+    "15-30 min" : 15
+    "> 30 min" : 10
+```
+
+#### Satisfação
+```mermaid
+pie title "Avaliação dos Clientes"
+    "Excelente" : 60
+    "Bom" : 25
+    "Regular" : 10
+    "Ruim" : 5
+```
+
+### Performance
+
+| Métrica | Meta | Atual |
+|---------|------|-------|
+| Tempo Primeira Resposta | < 5 min | 4.2 min |
+| Taxa de Resolução | > 90% | 93% |
+| Satisfação Cliente | > 4.5/5 | 4.7/5 |
+| Tickets/Hora | > 6 | 7.2 |
+
+### Relatórios
+
+1. **Diários**
+   * Volume de tickets
+   * Tempo médio resposta
+   * Taxa resolução
+   * Avaliações
+
+2. **Semanais**
+   * Performance equipe
+   * Picos de demanda
+   * Temas frequentes
+   * Eficiência bot
+
+3. **Mensais**
+   * Tendências
+   * Comparativos
+   * Metas
+   * ROI
+
+## 🔐 Segurança e Compliance
+
+### Controle de Acesso
+
+#### Níveis de Permissão
+
+| Nível | Acesso | Permissões |
+|-------|--------|------------|
+| Admin | Total | - Configurações sistema<br>- Gestão usuários<br>- Relatórios completos |
+| Supervisor | Gerencial | - Gestão equipe<br>- Relatórios básicos<br>- Configurações atendimento |
+| Atendente | Operacional | - Atendimento tickets<br>- Histórico conversas<br>- Respostas rápidas |
+
+### Proteção de Dados
+
+#### LGPD
+* Consentimento
+* Retenção
+* Exclusão
+
+#### Segurança
+* Criptografia
+* Backup
+* Auditoria
+
+# 🎓 TREINAMENTO E SUPORTE
+
+## 📚 Programa de Treinamento
+
+### Onboarding
+
+#### 1. Introdução ao Sistema
+* **Visão Geral**
+  * História do projeto
+  * Objetivos
+  * Benefícios
+  * Casos de sucesso
+
+* **Primeiros Passos**
+  * Acesso ao sistema
+  * Tour guiado
+  * Configurações iniciais
+  * Teste de conexão
+
+#### 2. Treinamento Básico
+
+* **Módulo 1: Interface**
+  * Dashboard
+  * Menu principal
+  * Atalhos
+  * Personalização
+
+* **Módulo 2: Atendimento**
+  * Receber tickets
+  * Responder mensagens
+  * Transferir conversas
+  * Finalizar atendimentos
+
+* **Módulo 3: WhatsApp**
+  * Conexão
+  * Recursos
+  * Limitações
+  * Boas práticas
+
+#### 3. Treinamento Avançado
+
+* **Módulo 4: Gestão**
+  * Relatórios
+  * Métricas
+  * Equipes
+  * Metas
+
+* **Módulo 5: Automação**
+  * Chatbot
+  * Respostas rápidas
+  * Fluxos
+  * Regras
+
+* **Módulo 6: Campanhas**
+  * Planejamento
+  * Execução
+  * Monitoramento
+  * Análise
+
+### Material de Apoio
+
+#### Documentação
+* Manual do usuário
+* Guias rápidos
+* Tutoriais em vídeo
+* FAQ
+
+#### Recursos
+* Templates
+* Exemplos
+* Casos de uso
+* Melhores práticas
+
+## 🆘 Suporte Técnico
+
+### Canais de Atendimento
+
+#### 1. Help Desk
+* **Horário**
+  * Segunda a Sexta: 08h às 18h
+  * Sábado: 09h às 13h
+
+* **Contatos**
+  * Email: suporte@grupovillela.com
+  * WhatsApp: (51) 9946-8664
+
+#### 2. Base de Conhecimento
+* **Artigos**
+  * Problemas comuns
+  * Soluções
+  * Dicas
+  * Atualizações
+
+* **Vídeos**
+  * Tutoriais
+  * Demonstrações
+  * Treinamentos
+  * Webinars
+
+### Níveis de Suporte
+
+#### Nível 1 - Suporte Básico
+* Dúvidas gerais
+* Problemas simples
+* Configurações básicas
+* Tempo resposta: 30min
+
+#### Nível 2 - Suporte Técnico
+* Problemas complexos
+* Configurações avançadas
+* Integrações
+* Tempo resposta: 2h
+
+#### Nível 3 - Desenvolvimento
+* Bugs
+* Customizações
+* Melhorias
+* Tempo resposta: 24h
+
+### Processo de Suporte
+
+```mermaid
+graph TD
+    A[Solicitação] --> B{Tipo?}
+    B -->|Dúvida| C[Nível 1]
+    B -->|Problema| D[Nível 2]
+    B -->|Bug| E[Nível 3]
+    C --> F{Resolvido?}
+    D --> F
+    E --> F
+    F -->|Sim| G[Fecha Ticket]
+    F -->|Não| H[Escala]
+    H --> B
+```
+
+### Manutenção
+
+#### Preventiva
+* Verificações diárias
+* Monitoramento
+* Backups
+* Atualizações
+
+#### Corretiva
+* Diagnóstico
+* Correção
+* Teste
+* Documentação
+
+#### Evolutiva
+* Planejamento
+* Desenvolvimento
+* Homologação
+* Implantação
+
+---
+
+*Última atualização: Março 2025*
+
