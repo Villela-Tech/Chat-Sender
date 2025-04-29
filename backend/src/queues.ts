@@ -130,7 +130,7 @@ async function handleVerifyQueue(job) {
 
             if (!isNaN(idQueue) && Number.isInteger(idQueue) && !isNaN(timeQueue) && Number.isInteger(timeQueue)) {
 
-              const tempoPassado = moment().subtract(timeQueue, "minutes").utc().format();
+              const tempoPassado = moment().subtract(timeQueue, "seconds").utc().format();
               // const tempoAgora = moment().utc().format();
 
               const { count, rows: tickets } = await Ticket.findAndCountAll({
