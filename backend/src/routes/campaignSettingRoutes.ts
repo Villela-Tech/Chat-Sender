@@ -13,7 +13,7 @@ const routes = express.Router();
 // View route - accessible to all authenticated users
 routes.get("/campaign-settings", isAuth, CampaignSettingController.index);
 
-// Modification route - only for admins
-routes.post("/campaign-settings", isAuth, isAdmin, CampaignSettingController.store);
+// Modification route - accessible to all authenticated users
+routes.post("/campaign-settings", isAuth, CampaignSettingController.store);
 
 export default routes;

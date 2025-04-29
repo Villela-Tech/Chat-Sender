@@ -1,7 +1,10 @@
 const rules = {
 	user: {
 		static: [
-			"campaigns:view"
+			"campaigns:view",
+			"campaigns:create",
+			"campaigns:edit",
+			"campaigns:delete"
 		],
 	},
 

@@ -10,28 +10,24 @@ const upload = multer(uploadConfig);
 
 const routes = express.Router();
 
-// View routes - accessible to all authenticated users
+// All routes accessible to authenticated users
 routes.get("/campaigns/list", isAuth, CampaignController.findList);
 routes.get("/campaigns", isAuth, CampaignController.index);
 routes.get("/campaigns/:id", isAuth, CampaignController.show);
-
-// Modification routes - only for admins
-routes.post("/campaigns", isAuth, isAdmin, CampaignController.store);
-routes.put("/campaigns/:id", isAuth, isAdmin, CampaignController.update);
-routes.delete("/campaigns/:id", isAuth, isAdmin, CampaignController.remove);
-routes.post("/campaigns/:id/cancel", isAuth, isAdmin, CampaignController.cancel);
-routes.post("/campaigns/:id/restart", isAuth, isAdmin, CampaignController.restart);
+routes.post("/campaigns", isAuth, CampaignController.store);
+routes.put("/campaigns/:id", isAuth, CampaignController.update);
+routes.delete("/campaigns/:id", isAuth, CampaignController.remove);
+routes.post("/campaigns/:id/cancel", isAuth, CampaignController.cancel);
+routes.post("/campaigns/:id/restart", isAuth, CampaignController.restart);
 routes.post(
   "/campaigns/:id/media-upload",
   isAuth,
-  isAdmin,
   upload.array("file"),
   CampaignController.mediaUpload
 );
 routes.delete(
   "/campaigns/:id/media-upload",
   isAuth,
-  isAdmin,
   CampaignController.deleteMedia
 );
 

@@ -398,53 +398,41 @@ const MainListItems = (props) => {
       />
 
       {showCampaigns && (
-        <Can
-          role={user.profile}
-          perform="campaigns:view"
-          yes={() => (
-            <>
-              <ListSubheader
-                hidden={collapsed}
-                style={{
-                  position: "relative",
-                  fontSize: "17px",
-                  textAlign: "left",
-                  paddingLeft: 20
-                }}
-                inset
-                color="inherit">
-                <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Campanhas")} </Typography>
-              </ListSubheader>
+        <>
+          <ListSubheader
+            hidden={collapsed}
+            style={{
+              position: "relative",
+              fontSize: "17px",
+              textAlign: "left",
+              paddingLeft: 20
+            }}
+            inset
+            color="inherit">
+            <Typography variant="overline" style={{ fontWeight: 'normal' }}>  {i18n.t("Campanhas")} </Typography>
+          </ListSubheader>
 
-              <ListItemLink
-                small
-                to="/campaigns"
-                primary={i18n.t("Listagem")}
-                icon={<ListIcon />}
-              />
+          <ListItemLink
+            small
+            to="/campaigns"
+            primary={i18n.t("Listagem")}
+            icon={<ListIcon />}
+          />
 
-              <ListItemLink
-                small
-                to="/contact-lists"
-                primary={i18n.t("Listas de Contatos")}
-                icon={<PeopleIcon />}
-              />
+          <ListItemLink
+            small
+            to="/contact-lists"
+            primary={i18n.t("Listas de Contatos")}
+            icon={<PeopleIcon />}
+          />
 
-              <Can
-                role={user.profile}
-                perform="drawer-admin-items:view"
-                yes={() => (
-                  <ListItemLink
-                    small
-                    to="/campaigns-config"
-                    primary={i18n.t("Configurações")}
-                    icon={<ListIcon />}
-                  />
-                )}
-              />
-            </>
-          )}
-        />
+          <ListItemLink
+            small
+            to="/campaigns-config"
+            primary={i18n.t("Configurações")}
+            icon={<ListIcon />}
+          />
+        </>
       )}
 
       <Can
