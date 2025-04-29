@@ -139,7 +139,7 @@ const messages = {
           name: "Nome",
           default: "Padrão",
           sendIdQueue: "Fila",
-          timeSendQueue: "Redirecionar para fila em X minutos",
+          timeSendQueue: "Redirecionar para fila em X segundos",
           queueRedirection: "Redirecionamento de Fila",
           queueRedirectionDesc: "Selecione uma fila para os contatos que não possuem fila serem redirecionados",
           prompt: "Prompt",
