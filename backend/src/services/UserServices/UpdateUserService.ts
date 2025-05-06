@@ -12,9 +12,8 @@ interface UserData {
   profile?: string;
   companyId?: number;
   queueIds?: number[];
-  whatsappId?: number;
+  whatsappId?: number | null | string;
   wpp?: string;
-
 }
 
 interface Request {
@@ -58,19 +57,26 @@ const UpdateUserService = async ({
     throw new AppError(err.message);
   }
 
+  // Convert empty whatsappId values to null
+  const normalizedWhatsappId = whatsappId === null || whatsappId === undefined || whatsappId === '' ? null : Number(whatsappId);
+
   if (requestUser.profile === "admin") {
     await user.update({
       email,
       password,
       profile,
-      name
+      name,
+      whatsappId: normalizedWhatsappId,
+      wpp
     });
     await user.$set("queues", queueIds);
   } else {
     await user.update({
       email,
       password,
-      name
+      name,
+      whatsappId: normalizedWhatsappId,
+      wpp
     });
   }
 
