@@ -2,6 +2,8 @@ import AppError from "../../errors/AppError";
 import Campaign from "../../models/Campaign";
 import ContactList from "../../models/ContactList";
 import Whatsapp from "../../models/Whatsapp";
+import { getIO } from "../../libs/socket";
+import CampaignShipping from "../../models/CampaignShipping";
 
 interface Data {
   id: number | string;
@@ -52,9 +54,17 @@ const UpdateService = async (data: Data): Promise<Campaign> => {
 
   await record.reload({
     include: [
-      { model: ContactList },
-      { model: Whatsapp, attributes: ["id", "name"] }
+      { model: ContactList, include: [{ model: ContactList }] },
+      { model: Whatsapp, attributes: ["id", "name"] },
+      { model: CampaignShipping }
     ]
+  });
+
+  // Emit socket update
+  const io = getIO();
+  io.to(`company-${record.companyId}-mainchannel`).emit(`company-${record.companyId}-campaign`, {
+    action: "update",
+    record
   });
 
   return record;

@@ -101,30 +101,61 @@ const CampaignReport = () => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
 
+    // Listen for campaign updates
     socket.on(`company-${companyId}-campaign`, (data) => {
-     
       if (data.record.id === +campaignId) {
         setCampaign(data.record);
-
-        if (data.record.status === "FINALIZADA") {
-          setTimeout(() => {
-            findCampaign();
-          }, 5000);
-        }
+        findCampaign(); // Fetch full data to ensure all related info is updated
       }
     });
 
+    // Listen for shipping updates
+    socket.on(`company-${companyId}-campaign-shipping`, (data) => {
+      if (data.campaignId === +campaignId) {
+        findCampaign();
+      }
+    });
+
+    // Polling fallback - update every 3 seconds
+    const pollingInterval = setInterval(() => {
+      if (campaign.status === "EM_ANDAMENTO") {
+        findCampaign();
+      }
+    }, 3000);
+
     return () => {
-      socket.disconnect();
+      socket.off(`company-${companyId}-campaign`);
+      socket.off(`company-${companyId}-campaign-shipping`);
+      clearInterval(pollingInterval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campaignId, socketManager]);
+  }, [campaignId, socketManager, campaign.status]);
 
   const findCampaign = async () => {
-    setLoading(true);
-    const { data } = await api.get(`/campaigns/${campaignId}`);
-    setCampaign(data);
-    setLoading(false);
+    try {
+      const { data } = await api.get(`/campaigns/${campaignId}`);
+      setCampaign(data);
+
+      if (data.shipping) {
+        const contacts = data.shipping;
+        const delivered = contacts.filter((c) => !isNull(c.deliveredAt));
+        const confirmationRequested = contacts.filter(
+          (c) => !isNull(c.confirmationRequestedAt)
+        );
+        const confirmed = contacts.filter(
+          (c) => !isNull(c.deliveredAt) && !isNull(c.confirmationRequestedAt)
+        );
+        setDelivered(delivered.length);
+        setConfirmationRequested(confirmationRequested.length);
+        setConfirmed(confirmed.length);
+      }
+
+      if (data.contactList?.contacts) {
+        const valids = data.contactList.contacts.filter((c) => c.isWhatsappValid);
+        setValidContacts(valids.length);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const formatStatus = (val) => {

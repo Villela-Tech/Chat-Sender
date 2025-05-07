@@ -552,9 +552,10 @@ function calculateDelay(index, baseDelay, longerIntervalAfter, greaterInterval, 
 }
 
 async function handleProcessCampaign(job) {
+  let campaign;
   try {
     const { id }: ProcessCampaignData = job.data;
-    const campaign = await getCampaign(id);
+    campaign = await getCampaign(id);
     const settings = await getSettings(campaign);
     if (campaign) {
       const { contacts } = campaign.contactList;
@@ -565,35 +566,36 @@ async function handleProcessCampaign(job) {
           variables: settings.variables,
         }));
 
-        // const baseDelay = job.data.delay || 0;
-        const longerIntervalAfter = parseToMilliseconds(settings.longerIntervalAfter);
-        const greaterInterval = parseToMilliseconds(settings.greaterInterval);
-        const messageInterval = settings.messageInterval;
-
-        let baseDelay = campaign.scheduledAt;
+        const messageInterval = settings.messageInterval; // em segundos
+        // Calcula o delay inicial até o horário de agendamento
+        const agendamentoTimestamp = new Date(campaign.scheduledAt).getTime();
+        const agora = Date.now();
+        const delayInicial = Math.max(agendamentoTimestamp - agora, 0);
 
         const queuePromises = [];
         for (let i = 0; i < contactData.length; i++) {
-          baseDelay = addSeconds(baseDelay, i > longerIntervalAfter ? greaterInterval : messageInterval);
+          // Delay: tempo até o agendamento + intervalo incremental
+          const delay = delayInicial + i * messageInterval * 1000;
 
           const { contactId, campaignId, variables } = contactData[i];
-          const delay = calculateDelay(i, baseDelay, longerIntervalAfter, greaterInterval, messageInterval);
-
-          //const queuePromise =
-          campaignQueue.add(
+          const queuePromise = campaignQueue.add(
             "PrepareContact",
             { contactId, campaignId, variables, delay },
             { removeOnComplete: true }
           );
-          //queuePromises.push(queuePromise);
-          logger.info(`Registro enviado pra fila de disparo: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}`);
+          logger.info(`Job agendado: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}ms`);
+          queuePromises.push(queuePromise);
         }
-       // await Promise.all(queuePromises);
+        await Promise.all(queuePromises);
         await campaign.update({ status: "EM_ANDAMENTO" });
       }
     }
   } catch (err: any) {
     Sentry.captureException(err);
+    logger.error(`Error processing campaign: ${err.message}`);
+    if (campaign) {
+      await campaign.update({ status: "CANCELADA" });
+    }
   }
 }
 
